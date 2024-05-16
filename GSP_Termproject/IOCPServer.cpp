@@ -2,10 +2,13 @@
 #include "Define.h"
 #include "EnumDef.h"
 #include "LogUtil.h"
+#include "OverExpansion.h"
+
+#include "Manager/ClientMgr.h"
 
 IOCPServer::IOCPServer()
 {
-	AcceptExpOver = new EXP_OVER;
+	AcceptExpOver = new OverExpansion;
 }
 
 IOCPServer::~IOCPServer()
@@ -59,12 +62,12 @@ bool IOCPServer::BindListen(const int PortNum)
 	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
 	char	accept_buf[sizeof(SOCKADDR_IN) * 2 + 32 + 100];
 
-	*(reinterpret_cast<SOCKET*>(&AcceptExpOver->_net_buf)) = c_socket;
-	ZeroMemory(&AcceptExpOver->_wsa_over, sizeof(AcceptExpOver->_wsa_over));
-	AcceptExpOver->_comp_op = COMP_OP::OP_ACCEPT;
+	*(reinterpret_cast<SOCKET*>(&AcceptExpOver->_send_buf)) = c_socket;
+	ZeroMemory(&AcceptExpOver->_over, sizeof(AcceptExpOver->_over));
+	AcceptExpOver->_comp_type = COMP_TYPE::OP_ACCEPT;
 
 	AcceptEx(ListenSocket, c_socket, accept_buf, 0, sizeof(SOCKADDR_IN) + 16,
-		sizeof(SOCKADDR_IN) + 16, NULL, &AcceptExpOver->_wsa_over);
+		sizeof(SOCKADDR_IN) + 16, NULL, &AcceptExpOver->_over);
 	std::cout << "Aceept Called\n";
 
 	return true;
@@ -92,7 +95,7 @@ void IOCPServer::Worker()
 		BOOL ret = GetQueuedCompletionStatus(hIocp, &num_byte, (PULONG_PTR)&iocp_key, &p_over, INFINITE);
 
 		int client_id = static_cast<int>(iocp_key);
-		EXP_OVER* exp_over = reinterpret_cast<EXP_OVER*>(p_over);
+		OverExpansion* exp_over = reinterpret_cast<OverExpansion*>(p_over);
 
 		if (FALSE == ret)
 		{
@@ -111,13 +114,13 @@ void IOCPServer::Worker()
 			// 	ClientMgr::Instance()->Disconnect(client_id);
 		}
 
-		switch (exp_over->_comp_op)
+		switch (exp_over->_comp_type)
 		{
-			case COMP_OP::OP_ACCEPT:
+			case COMP_TYPE::OP_ACCEPT:
 				break;
-			case COMP_OP::OP_RECV:
+			case COMP_TYPE::OP_RECV:
 				break;
-			case COMP_OP::OP_SEND:
+			case COMP_TYPE::OP_SEND:
 				break;
 		default:
 			break;
@@ -137,4 +140,49 @@ void IOCPServer::Worker()
 
 void IOCPServer::ThreadJoin()
 {
+	for (auto& t : WorkerThreads)
+	{
+		t.join();
+	}
+}
+
+void IOCPServer::ProcessAccept(OverExpansion* exp)
+{
+	ClientMgr* ClientManager = ClientMgr::Instance();
+	// id�� �������� ��ȣ 9999�� ������ ��?
+	// if (ClientManager->GetClientCount() < MAXCLIENT)
+	// {
+	// 	// ��� Ŭ���� ���� ��ȣ�� ����??
+	// 	int NowClientNum;
+	// 	ClientInfo* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+	// 
+	// 	socket->SetClientNum(NowClientNum);
+	// 	socket->SetSocket(*(reinterpret_cast<SOCKET*>(exp->_net_buf)));
+	// 
+	// 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket->GetSocket()), m_hIocp, NowClientNum, 0);
+	// 
+	// 	socket->Recv();
+	// 
+	// 	PPlayerJoin PPJ(NowClientNum % 6);
+	// 	socket->SendProcess(sizeof(PPJ), &PPJ);
+	// 
+	// 	// Push Game Start Timer (Time to Select Weapon)
+	// 	if (NowClientNum % MAXPLAYER == MAXPLAYER - 1)
+	// 	{
+	// 		PacketMgr::Instance()->GameBeginProcessing(NowClientNum);
+	// 	}
+	// 
+	// 	// SendPlayerJoinPacket(m_iClientId);
+	// 
+	// 	cout << NowClientNum << "번 Accept" << endl;
+	// 
+	// 	if (!ReadyToNextAccept())
+	// 	{
+	// 		return;
+	// 	}
+	// }
+	// else
+	// {
+	// 	std::cerr << "Client MAX!" << std::endl;
+	// }
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-enum class COMP_OP : BYTE
+enum class COMP_TYPE : BYTE
 {
 	// Default
 	OP_RECV,

@@ -14,10 +14,12 @@ public:
 	void Worker();
 	void ThreadJoin();
 
+	void ProcessAccept(class OverExpansion* exp);
+
 protected:
 	SOCKET ListenSocket;
 	HANDLE hIocp;
-	class EXP_OVER* AcceptExpOver;
+	class OverExpansion* AcceptExpOver;
 
 	std::vector<std::thread> WorkerThreads;
 
