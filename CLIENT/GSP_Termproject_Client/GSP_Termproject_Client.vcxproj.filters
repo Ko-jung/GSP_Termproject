@@ -13,57 +13,50 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Manager">
-      <UniqueIdentifier>{216048f5-5bbc-4ec4-aa37-71309b8f42b7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common">
-      <UniqueIdentifier>{d578bdb7-1714-4b44-ba2a-85ac4b0bf1e2}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="IOCPServer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="LogUtil.cpp">
+    <ClCompile Include="Actor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Client.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Manager\ClientMgr.cpp">
-      <Filter>Manager</Filter>
+    <ClCompile Include="GameMgr.cpp">
+      <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="IOCPServer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Define.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="LogUtil.h">
+    <ClInclude Include="Actor.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Client.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="OverExpansion.h">
+    <ClInclude Include="framework.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Manager\ClientMgr.h">
-      <Filter>Manager</Filter>
+    <ClInclude Include="GameMgr.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\protocol.h">
-      <Filter>Common</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\EnumDef.h">
-      <Filter>Common</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Define.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Client.rc">
+      <Filter>리소스 파일</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

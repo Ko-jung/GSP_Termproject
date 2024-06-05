@@ -1,6 +1,6 @@
 ﻿#include "IOCPServer.h"
 #include "Define.h"
-#include "EnumDef.h"
+#include "../../Common/EnumDef.h"
 #include "LogUtil.h"
 #include "OverExpansion.h"
 
@@ -153,10 +153,8 @@ void IOCPServer::ThreadJoin()
 void IOCPServer::ProcessAccept(OverExpansion* exp)
 {
 	ClientMgr* ClientManager = ClientMgr::Instance();
-	// id�� �������� ��ȣ 9999�� ������ ��?
-	 if (ClientManager->GetClientCount() < MAXPLAYER)
+	if (ClientManager->GetClientCount() < MAXPLAYER)
 	{
-	 	// ��� Ŭ���� ���� ��ȣ�� ����??
 	 	int NowClientNum;
 	 	Client* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
 	 
