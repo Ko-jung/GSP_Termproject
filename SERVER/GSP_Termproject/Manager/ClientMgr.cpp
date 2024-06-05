@@ -8,7 +8,7 @@ ClientMgr::ClientMgr():
 {
 	for (auto& c : Clients)
 	{
-		c = new Client();
+		c = nullptr;
 	}
 }
 
@@ -29,12 +29,23 @@ Client* ClientMgr::GetEmptyClient(int& ClientNum)
 			if (!Clients[i])
 			{
 				auto NewClient = new Client();
-				std::atomic<Client*> AtomicClientPtr = std::atomic<Client*>(Clients[i]);
+
+				//std::atomic<Client*>* AtomicClientPtr = Clients[i];
+				//auto abc = reinterpret_cast<std::atomic<Client*>*>(&Clients[i]);
+				Client* llNullptr = nullptr;
 				bool succ = std::atomic_compare_exchange_strong(
-					&AtomicClientPtr,
-					nullptr,
+					reinterpret_cast<std::atomic<Client*>*>(&Clients[i]),
+					&llNullptr,
 					NewClient
 				);
+
+				//long long llNullptr = reinterpret_cast<long long>(nullptr);
+				//bool succ = std::atomic_compare_exchange_strong(
+				//	reinterpret_cast<std::atomic_llong*>(&Clients[i]),
+				//	&llNullptr,
+				//	reinterpret_cast<long long>(NewClient)
+				//);
+
 
 				if (succ) 
 				{

@@ -142,6 +142,7 @@
     <ClInclude Include="LogUtil.h" />
     <ClInclude Include="Manager\ClientMgr.h" />
     <ClInclude Include="OverExpansion.h" />
+    <ClInclude Include="protocol.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

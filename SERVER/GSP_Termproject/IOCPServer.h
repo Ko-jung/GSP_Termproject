@@ -16,7 +16,7 @@ public:
 
 	void ProcessAccept(class OverExpansion* exp);
 
-protected:
+//protected:
 	SOCKET ListenSocket;
 	HANDLE hIocp;
 	class OverExpansion* AcceptExpOver;

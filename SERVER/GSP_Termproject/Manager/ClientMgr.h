@@ -16,6 +16,7 @@ public:
 	~ClientMgr();
 
 	Client* GetEmptyClient(int& ClientNum);
+	int GetClientCount() { return ClientCount; }
 
 private:
 	std::array<Client*, MAXPLAYER> Clients;

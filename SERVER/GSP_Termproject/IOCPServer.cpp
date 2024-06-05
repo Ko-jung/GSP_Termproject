@@ -5,6 +5,7 @@
 #include "OverExpansion.h"
 
 #include "Manager/ClientMgr.h"
+#include "Client.h"
 
 IOCPServer::IOCPServer()
 {
@@ -75,6 +76,9 @@ bool IOCPServer::BindListen(const int PortNum)
 
 void IOCPServer::StartServer()
 {
+	int a;
+	ClientMgr::Instance()->GetEmptyClient(a);
+
 	for (int i = 0; i < WorkerNum; i++)
 	{
 		WorkerThreads.emplace_back([this]() { Worker(); });
@@ -150,39 +154,39 @@ void IOCPServer::ProcessAccept(OverExpansion* exp)
 {
 	ClientMgr* ClientManager = ClientMgr::Instance();
 	// id�� �������� ��ȣ 9999�� ������ ��?
-	// if (ClientManager->GetClientCount() < MAXCLIENT)
-	// {
-	// 	// ��� Ŭ���� ���� ��ȣ�� ����??
-	// 	int NowClientNum;
-	// 	ClientInfo* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
-	// 
-	// 	socket->SetClientNum(NowClientNum);
-	// 	socket->SetSocket(*(reinterpret_cast<SOCKET*>(exp->_net_buf)));
-	// 
-	// 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket->GetSocket()), m_hIocp, NowClientNum, 0);
-	// 
-	// 	socket->Recv();
-	// 
-	// 	PPlayerJoin PPJ(NowClientNum % 6);
-	// 	socket->SendProcess(sizeof(PPJ), &PPJ);
-	// 
-	// 	// Push Game Start Timer (Time to Select Weapon)
-	// 	if (NowClientNum % MAXPLAYER == MAXPLAYER - 1)
-	// 	{
-	// 		PacketMgr::Instance()->GameBeginProcessing(NowClientNum);
-	// 	}
-	// 
-	// 	// SendPlayerJoinPacket(m_iClientId);
-	// 
-	// 	cout << NowClientNum << "번 Accept" << endl;
-	// 
-	// 	if (!ReadyToNextAccept())
-	// 	{
-	// 		return;
-	// 	}
-	// }
-	// else
-	// {
-	// 	std::cerr << "Client MAX!" << std::endl;
-	// }
+	 if (ClientManager->GetClientCount() < MAXPLAYER)
+	{
+	 	// ��� Ŭ���� ���� ��ȣ�� ����??
+	 	int NowClientNum;
+	 	Client* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+	 
+	 	socket->ClientNum = NowClientNum;
+	 	socket->Socket = (*(reinterpret_cast<SOCKET*>(exp->_send_buf)));
+	 
+	 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket->Socket), hIocp, NowClientNum, 0);
+	 
+	 	socket->Recv();
+	 
+	 	PPlayerJoin PPJ(NowClientNum % 6);
+	 	socket->SendProcess(sizeof(PPJ), &PPJ);
+	 
+	 	// Push Game Start Timer (Time to Select Weapon)
+	 	if (NowClientNum % MAXPLAYER == MAXPLAYER - 1)
+	 	{
+	 		PacketMgr::Instance()->GameBeginProcessing(NowClientNum);
+	 	}
+	 
+	 	// SendPlayerJoinPacket(m_iClientId);
+	 
+	 	cout << NowClientNum << "번 Accept" << endl;
+	 
+	 	if (!ReadyToNextAccept())
+	 	{
+	 		return;
+	 	}
+	 }
+	 else
+	 {
+	 	std::cerr << "Client MAX!" << std::endl;
+	}
 }
