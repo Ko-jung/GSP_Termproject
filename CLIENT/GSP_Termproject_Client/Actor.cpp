@@ -2,17 +2,15 @@
 #include "Define.h"
 #include "Actor.h"
 
+CImage Actor::Img;
+
 Actor::Actor(bool IsPossess) :
-	X(100.f), Y(100.f)
+	Position(100.f, 100.f)
 {
-	if (IsPossess)
-	{
-		Img.Load(TEXT("Image/흰색말.png"));
-	}
-	else
-	{
-		Img.Load(TEXT("Image/검은말.png"));
-	}
+	if (Img.IsNull())
+		Img.Load(TEXT("Image/Player/Actor.png"));
+
+	//LoadSprite();
 }
 
 void Actor::Update(float elapsedTime)
@@ -21,14 +19,26 @@ void Actor::Update(float elapsedTime)
 
 void Actor::Draw(HDC& memdc)
 {
+	static int ImageSpriteWidth = 16;
+	static int ImageSpriteHeight = 34;
+
 	float BoardWidthSize = WINWIDTH / BOARDSIZE;
 	float BoardHeightSize = WINHEIGHT / BOARDSIZE;
 
+	// RECT ImageDst{ ImageSpriteWidth * 0, (int)State * ImageSpriteHeight,
+	// 	ImageSpriteWidth * 0 + ImageSpriteWidth, (int)State * ImageSpriteHeight + ImageSpriteHeight };
+	RECT ImageDst{ WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - BoardHeightSize,
+		BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
+	RECT ImageSrc{ ImageSpriteWidth * 0, (int)0 * ImageSpriteHeight,
+		ImageSpriteWidth * 0 + ImageSpriteWidth, (int)0 * ImageSpriteHeight + ImageSpriteHeight };
 
-	//RECT TargetDrawRect = { Location.x * BoardWidthSize, Location.y * BoardHeightSize,
-	//	Location.x * BoardWidthSize + BoardWidthSize, Location.y* BoardHeightSize + BoardHeightSize };
-	//RECT ImgRect = { 0,0,Img.GetWidth(), Img.GetHeight() };
-	//Img.Draw(memdc, TargetDrawRect, ImgRect);
+	Img.Draw(memdc, ImageDst, ImageSrc);
+}
+
+void Actor::LoadSprite()
+{
+
+	//Sprites.emplace_back();
 }
 
 void Actor::Move(WPARAM wParam)
@@ -70,4 +80,14 @@ void Actor::Move(WPARAM wParam)
 	// default:
 	// 	break;
 	// }
+}
+
+void Actor::ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP)
+{
+	CurrentHp = SLIP->hp;
+	MaxHp = SLIP->max_hp;
+	Exp = SLIP->exp;
+	Level = SLIP->level;
+	Position.X = SLIP->x;
+	Position.Y = SLIP->y;
 }

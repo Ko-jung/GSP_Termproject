@@ -1,7 +1,7 @@
 #include "ClientMgr.h"
 #include "../Client.h"
 
-#include "../OverExpansion.h"
+#include "../../../Common/OverExpansion.h"
 
 #include <atomic>
 
@@ -25,6 +25,13 @@ ClientMgr::~ClientMgr()
 void ClientMgr::RecvProcess(int id, int bytes, OverExpansion* exp)
 {
 	Clients[id]->RecvProcess(bytes, exp);
+}
+
+void ClientMgr::Disconnect(int id)
+{
+	closesocket(Clients[id]->Socket);
+	std::lock_guard<std::mutex> ll(Clients[id]->StateMutex);
+	Clients[id]->State = CLIENT_STATE::FREE;
 }
 
 Client* ClientMgr::GetEmptyClient(int& ClientNum)
@@ -69,4 +76,30 @@ Client* ClientMgr::GetEmptyClient(int& ClientNum)
 		}
 	}
 	return nullptr;
+}
+
+void ClientMgr::ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c)
+{
+	strcpy_s(c->PlayerName, CLP->name);
+	{
+		std::lock_guard<std::mutex> ll{ c->StateMutex };
+		c->Position.X = rand() % W_WIDTH;
+		c->Position.Y = rand() % W_HEIGHT;
+		c->State = CLIENT_STATE::INGAME;
+	}
+	c->SendLoginInfo();
+
+	// ADD SECTOR
+
+	// ==========
+}
+
+void ClientMgr::ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c)
+{
+	c->StressTestMove(CMP->direction);
+}
+
+void ClientMgr::ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c)
+{
+	c->Move(CMP->direction);
 }

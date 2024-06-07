@@ -8,6 +8,7 @@
 
 #define MEMCPYBUFTOPACKET(packet) memcpy(&packet, p, sizeof(packet))
 
+class Client;
 
 class PacketMgr
 {
@@ -18,7 +19,7 @@ public:
 	~PacketMgr() {}
 
 public:
-	void ProcessPacket(PACKET* p, class ClientInfo* c);
+	void ProcessPacket(PACKET* packet, Client* c);
 
 private:
 };

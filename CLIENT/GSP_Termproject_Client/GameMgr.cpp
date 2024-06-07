@@ -5,21 +5,22 @@
 #include "Actor.h"
 
 #include "framework.h"
-#include "../../Common/protocol.h"
-#include <iostream>
 
+#include "../../Common/protocol.h"
 #include "../../Common/EnumDef.h"
+#include "../../Common/GameUtil.h"
 #include "Define.h"
 
 void CALLBACK recv_callback(DWORD errors, DWORD r_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
 void CALLBACK send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
 
-GameMgr::GameMgr()
+GameMgr::GameMgr() :
+	ElapsedTime(0.f),
+	KeyInputInfo(0),
+	SerialNum(-1),
+	RemainDataLen(0)
 {
 	OwnActor = std::make_shared<Actor>();
-	SerialNum = -1;
-
-	KeyInputInfo.assign(4, false);
 
 	WorldImageTile.Load(TEXT("Image/Map/MapImage.png"));
 	LoadBoard();
@@ -27,7 +28,7 @@ GameMgr::GameMgr()
 
 GameMgr::~GameMgr()
 {
-	closesocket(s_socket);
+	closesocket(ServerSocket);
 	WSACleanup();
 }
 
@@ -44,14 +45,14 @@ bool GameMgr::InitSocket()
 
 bool GameMgr::Connect(const char* ip)
 {
-	s_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
+	ServerSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
 
 	SOCKADDR_IN server_addr;
 	ZeroMemory(&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(GAMESERVERPORT);
 	inet_pton(AF_INET, ip, &server_addr.sin_addr);
-	int ret = connect(s_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
+	int ret = connect(ServerSocket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
 	if (ret != 0)
 	{
 		error_display("connect Error: ", WSAGetLastError());
@@ -59,6 +60,7 @@ bool GameMgr::Connect(const char* ip)
 	}
 
 	//NetworkThread = std::thread(&GameMgr::Recv, this);
+	Recv();
 
 	return true;
 }
@@ -79,12 +81,16 @@ void GameMgr::Draw(HDC& memdc)
 void GameMgr::Update(float elapsedTime)
 {
 	OwnActor->Update(elapsedTime);
+
+	SendPosition();
+
+	std::cout << OwnActor->GetLocation().X << ", " << OwnActor->GetLocation().Y << std::endl;
 }
 
 void GameMgr::ProcessUpInput(WPARAM wParam)
 {
 	// Check Input Move Key
-	int Key = -1;
+	int Key = 0;
 
 	switch (wParam)
 	{
@@ -92,84 +98,69 @@ void GameMgr::ProcessUpInput(WPARAM wParam)
 	case 'W':
 	case VK_UP:
 	{
-		Key = (int)KEY_INFO::UP;
+		KeyInputInfo = KeyInputInfo & 0b0111;
 		break;
 	}
 	case 'a':
 	case 'A':
 	case VK_LEFT:
 	{
-		Key = (int)KEY_INFO::LEFT;
+		KeyInputInfo = KeyInputInfo & 0b1101;
 		break;
 	}
 	case 's':
 	case 'S':
 	case VK_DOWN:
 	{
-		Key = (int)KEY_INFO::DOWN;
+		KeyInputInfo = KeyInputInfo & 0b1011;
 		break;
 	}
 	case 'd':
 	case 'D':
 	case VK_RIGHT:
 	{
-		Key = (int)KEY_INFO::RIGHT;
+		KeyInputInfo = KeyInputInfo & 0b1110;
 		break;
 	}
 	default:
 		break;
-	}
-
-	// Process Input
-	if (Key != -1)
-	{
-		KeyInputInfo[Key] = false;
 	}
 }
 
 void GameMgr::ProcessDownInput(WPARAM wParam)
 {
-	// Check Input Move Key
-	int Key = -1;
-
 	switch (wParam)
 	{
 	case 'w':
 	case 'W':
 	case VK_UP:
 	{
-		Key = (int)KEY_INFO::UP;
+		KeyInputInfo = KeyInputInfo | 0b1000;
 		break;
 	}
 	case 'a':
 	case 'A':
 	case VK_LEFT:
 	{
-		Key = (int)KEY_INFO::LEFT;
+		KeyInputInfo = KeyInputInfo | 0b0010;
 		break;
 	}
 	case 's':
 	case 'S':
 	case VK_DOWN:
 	{
-		Key = (int)KEY_INFO::DOWN;
+		KeyInputInfo = KeyInputInfo | 0b0100;
 		break;
 	}
 	case 'd':
 	case 'D':
 	case VK_RIGHT:
 	{
-		Key = (int)KEY_INFO::RIGHT;
+		KeyInputInfo = KeyInputInfo | 0b0001;
 		break;
 	}
 	default:
 		break;
-	}
-
-	// Process Input
-	if (Key != -1)
-	{
-		KeyInputInfo[Key] = true;
 	}
 }
 
@@ -213,16 +204,15 @@ void GameMgr::LoadBoard()
 
 void GameMgr::DrawBoard(HDC& memdc)
 {
-	float X, Y;
-	OwnActor->GetLocation(X, Y);
-	std::cout << X << ", " << Y << std::endl;
+	POSITION pos = OwnActor->GetLocation();
+	//std::cout << X << ", " << Y << std::endl;
 
 	for (int y = 0; y < BOARDSIZE; y++)
 	{
 		for (int x = 0; x < BOARDSIZE; x++)
 		{
-			int DrawX = X + x - BOARDSIZE / 2;
-			int DrawY = Y + y - BOARDSIZE / 2;
+			int DrawX = pos.X + x - BOARDSIZE / 2;
+			int DrawY = pos.Y + y - BOARDSIZE / 2;
 
 			if (DrawX < 0 || DrawX >= W_WIDTH || DrawY < 0 || DrawY >= W_WIDTH) continue;
 
@@ -251,6 +241,16 @@ void GameMgr::DrawBoard(HDC& memdc)
 			}
 		}
 	}
+}
+
+void GameMgr::SendPosition()
+{
+	POSITION Pos = OwnActor->GetLocation();
+
+	CS_8DIRECT_MOVE_PACKET CMP;
+	CMP.direction = KeyInputInfo;
+
+	Send(&CMP);
 }
 
 void GameMgr::SetOwnActorID(const char* ID)
@@ -283,105 +283,51 @@ void GameMgr::error_display(const char* msg, int err_no)
 //    mybuf_r.buf = recv_buf;
 //    mybuf_r.len = CHAT_SIZE;
 //
-//    WSARecv(s_socket, &mybuf_r, 1, &recv_byte, &recv_flag, 0, 0);
+//    WSARecv(ServerSocket, &mybuf_r, 1, &recv_byte, &recv_flag, 0, 0);
 //    ProcessRecv(recv_buf);
 //}
 
-void GameMgr::ProcessRecv(char* recv_buf)
+void GameMgr::ProcessRecv(PACKET* packet)
 {
-	//switch (op)
-	//{
-	//case COMP_OP::OP_ACTORLOCATION:
-	//{
-	//	PActorLocation PAL;
-	//	memcpy(&PAL, recv_buf, sizeof(PActorLocation));
-	//	if (SerialNum == PAL.SenderId)
-	//	{
-	//		// 서버에서 보내온 좌표로 말을 이동시킨다.
-	//		OwnActor->SetLocation(PAL.Location);
-	//	}
-	//	else
-	//	{
-	//		// 서버에서 보내온 좌표로 말을 이동시킨다.
-	//		OtherActor[PAL.SenderId]->SetLocation(PAL.Location);
-	//	}
+	switch (packet->type)
+	{
+	case SC_LOGIN_INFO:
+	{
+		SC_LOGIN_INFO_PACKET* SLIP = reinterpret_cast<SC_LOGIN_INFO_PACKET*>(packet);
+		SerialNum = SLIP->id;
+
+		OwnActor->ProcessLogin(SLIP);
+		break;
+	}
+	case SC_LOGIN_FAIL:
+		break;
+	//case SC_ADD_OBJECT:
 	//	break;
-	//}
-	//case COMP_OP::OP_SETSERIALNUM:
-	//{
-	//	PSetPlayerSerialNum PSPSN;
-	//	memcpy(&PSPSN, recv_buf, sizeof(PSPSN));
-	//	SerialNum = PSPSN.SenderId;
-	//	break;
-	//}
-	//case COMP_OP::OP_JOINNEWPLAYER:
-	//{
-	//	PJoinNewPlayer PJNP;
-	//	memcpy(&PJNP, recv_buf, sizeof(PJNP));
-	//	if (SerialNum == -1)
-	//	{
-	//		SerialNum = PJNP.SenderId;
-	//	}
-	//	else
-	//	{
-	//		OtherActor.try_emplace(PJNP.SenderId, std::make_shared<Actor>(false));
-	//		LogUtil::print("New Player Join!");
-	//	}
-	//	break;
-	//}
-	//case COMP_OP::OP_DISCONNECTPLAYER:
-	//{
-	//	PDisconnectPlayer PDP;
-	//	memcpy(&PDP, recv_buf, sizeof(PDP));
-	//	OtherActor.erase(PDP.SenderId);
-	//
-	//	char msg[100];
-	//	sprintf_s(msg, "%d Client Disconnect", 100);
-	//	LogUtil::print(msg);
-	//	break;
-	//}
-	//case COMP_OP::OP_LOADALLCLIENT:
-	//{
-	//	PLoadAllClient PLA;
-	//	memcpy(&PLA, recv_buf, sizeof(PLA));
-	//
-	//	int i = 0;
-	//	while (true)
-	//	{
-	//		int serial = PLA.SerialIDs[i];
-	//
-	//		if (serial == (BYTE)(-1))
-	//			break;
-	//		if (serial == SerialNum)
-	//		{
-	//			i++;
-	//			continue;
-	//		}
-	//
-	//		OtherActor.try_emplace(serial, std::make_shared<Actor>(false));
-	//		OtherActor[serial]->SetLocation(PLA.Locations[i]);
-	//		i++;
-	//	} 
-	//
-	//	break;
-	//}
-	//default:
-	//	break;
-	//}
+	case SC_REMOVE_OBJECT:
+		break;
+	case SC_MOVE_OBJECT:
+		break;
+	case SC_CHAT:
+		break;
+	case SC_STAT_CHANGE:
+		break;
+	case SC_8DIRECT_MOVE_OBJECT:
+	{
+		SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP = reinterpret_cast<SC_8DIRECT_MOVE_OBJECT_PACKET*>(packet);
+		OwnActor->SetLocation({SDMOP->x, SDMOP->y});
+		break;
+	}
+	default:
+		break;
+	}
 }
 
-void GameMgr::Send(PACKET* p, int packetSize)
+void GameMgr::Send(PACKET* p)
 {
-	DWORD sent_byte;
-	WSABUF mybuf;
-	mybuf.buf = send_buf;
-	mybuf.len = packetSize;// static_cast<ULONG>(strlen(send_buf)) + 1;
-	memcpy(mybuf.buf, p, packetSize);
-	//mybuf.buf = send_buf;
+	OverExpansion* exp = new OverExpansion((char*)p);
 
-	ZeroMemory(&wsaover, sizeof(wsaover));
-	int ret = WSASend(s_socket, &mybuf, 1, nullptr, 0, &wsaover, ::send_callback);
-	if (ret != 0)
+	int ret = WSASend(ServerSocket, &exp->_wsabuf, 1, nullptr, 0, &exp->_over, ::send_callback);
+	if (ret != 0 && ret != WSA_IO_PENDING)
 	{
 		error_display("WSASend Error: ", WSAGetLastError());
 	}
@@ -389,25 +335,51 @@ void GameMgr::Send(PACKET* p, int packetSize)
 
 void GameMgr::Recv()
 {
-	DWORD recv_flag = 0;
-	mybuf[0].buf = recv_buf;
-	mybuf[0].len = CHAT_SIZE;
+	DWORD RecvFlag = 0;
 
-	ZeroMemory(&wsaover, sizeof(wsaover));
-	WSARecv(s_socket, mybuf, 1, nullptr, &recv_flag, &wsaover, ::recv_callback);
+	OverExpansion* Exp = new OverExpansion;
+	ZeroMemory(&Exp->_over, sizeof(Exp->_over));
+	Exp->_wsabuf.buf = reinterpret_cast<char*>(Exp->_send_buf + RemainDataLen);
+	Exp->_wsabuf.len = sizeof(Exp->_send_buf) - RemainDataLen;
+
+	int ret = WSARecv(ServerSocket, &Exp->_wsabuf, 1, nullptr, &RecvFlag, &Exp->_over, ::recv_callback);
+	if (ret != 0)
+	{
+		if(WSAGetLastError() != WSA_IO_PENDING)
+		error_display("WSARecv Error: ", WSAGetLastError());
+	}
 }
 
 void GameMgr::recv_callback(DWORD errors, DWORD r_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag)
 {
 	if (r_size == 0)
 	{
-		//g_bLogout = true;
 		std::cout << "Maybe Server CLOSE" << std::endl;
 		exit(0);
 		return;
 	}
 
-	ProcessRecv(recv_buf);
+	OverExpansion* exp = reinterpret_cast<OverExpansion*>(p_wsaover);
+
+	int RemainData = r_size + RemainDataLen;
+	char* Buf = exp->_send_buf;
+
+	while (RemainData > 0)
+	{
+		PACKET* packet = reinterpret_cast<PACKET*>(Buf);
+		if (RemainData >= packet->size)
+		{
+			ProcessRecv(packet);
+			Buf += packet->size;
+			RemainData -= packet->size;
+		}
+		else
+			break;
+	}
+	RemainDataLen = RemainData;
+
+	if (RemainData > 0)
+		memmove(exp->_send_buf, Buf, RemainData);
 
 	Recv();
 	//Send();
@@ -415,9 +387,5 @@ void GameMgr::recv_callback(DWORD errors, DWORD r_size, LPWSAOVERLAPPED p_wsaove
 
 void GameMgr::send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag)
 {
-	//mybuf[0].buf = recv_buf;
-	//mybuf[0].len = CHAT_SIZE;
-	//
-	//ZeroMemory(&wsaover, sizeof(wsaover));
-	//WSARecv(s_socket, mybuf, 1, nullptr, &recv_flag, &wsaover, ::recv_callback);
+	delete p_wsaover;
 }

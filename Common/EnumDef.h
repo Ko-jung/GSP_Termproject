@@ -24,3 +24,25 @@ enum class MAP_INFO : WORD
 	GROUND_EMPTY = 18 * 1 + 14,
 	EMPTY,
 };
+
+enum class CLIENT_STATE : BYTE
+{
+	FREE,			// Not Use
+	ALLOC,			// Accpet but not Use in game
+	INGAME,			// Playing in Game
+};
+
+enum class ACTOR_STATE : BYTE
+{
+	LEFTWALK,
+	RIGHTWALK,
+	UPWALK,
+	DOWNWALK,
+
+	LEFTATTACK,
+	RIGHTATTACK,
+	UPATTACK,
+	DOWNATTACK,
+
+	IDLE,
+};

@@ -1,9 +1,13 @@
 #pragma once
 
-#include "stdafx.h"
-#include "Define.h"
-#include "../../Common/EnumDef.h"
-#include "../../Common/protocol.h"
+#include <WS2tcpip.h>
+#include <MSWSock.h>
+#include <WinSock2.h>
+#pragma comment(lib, "MSWSock.lib")
+#pragma comment(lib, "ws2_32.lib")
+
+#include "EnumDef.h"
+#include "protocol.h"
 
 class OverExpansion
 {
@@ -22,10 +26,10 @@ public:
 	}
 	OverExpansion(char* packet)
 	{
-		_wsabuf.len = packet[0];
+		_wsabuf.len = *(unsigned short*)packet;
 		_wsabuf.buf = _send_buf;
 		ZeroMemory(&_over, sizeof(_over));
 		_comp_type = COMP_TYPE::OP_SEND;
-		memcpy(_send_buf, packet, packet[0]);
+		memcpy(_send_buf, packet, _wsabuf.len);
 	}
 };

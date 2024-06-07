@@ -13,7 +13,9 @@ public:
 	void StartServer();
 	void Worker();
 	void ThreadJoin();
+	void Disconnect(int Id);
 
+	void ReadyAccept();
 	void ProcessAccept(class OverExpansion* exp);
 
 //protected:

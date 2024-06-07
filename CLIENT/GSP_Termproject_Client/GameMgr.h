@@ -4,9 +4,11 @@
 #include <Windows.h>
 #include <thread>
 #include <unordered_map>
-#include "../../Common/protocol.h"
 #include "framework.h"
 #include <atlimage.h>
+
+#include "../../Common/protocol.h"
+#include "../../Common/OverExpansion.h"
 
 class Actor;
 
@@ -21,10 +23,9 @@ public:
 	bool InitSocket();
 	bool Connect(const char* ip);
 	void error_display(const char* msg, int err_no);
-	//void Recv();
-	void ProcessRecv(char* recv_buf);
-	void Send(PACKET* p, int packetSize);
+	void Send(PACKET* p);
 	void Recv();
+	void ProcessRecv(PACKET* packet);
 
 	void CALLBACK recv_callback(DWORD errors, DWORD r_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
 	void CALLBACK send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
@@ -39,29 +40,27 @@ public:
 	void LoadBoard();
 	void DrawBoard(HDC& memdc);
 
-	SOCKET& GetSocket() { return s_socket; }
+	void SendPosition();
+
+	SOCKET& GetSocket() { return ServerSocket; }
 
 	void SetOwnActorID(const char* ID);
 
 protected:
-	std::vector<bool> KeyInputInfo;
+	//std::vector<bool> KeyInputInfo;
+	float ElapsedTime;
+	char KeyInputInfo;
 	
 	std::shared_ptr<Actor> OwnActor;
 	int SerialNum;
 
 	std::unordered_map<int, std::shared_ptr<Actor>> OtherActor;
 
-	SOCKET s_socket;
-	char buf[CHAT_SIZE];
-	WSABUF mybuf[1];
-	WSAOVERLAPPED wsaover;
-
-	std::thread NetworkThread;
-
-	char send_buf[CHAT_SIZE];
-	char recv_buf[CHAT_SIZE];
-
 	CImage WorldImageTile;
 	std::array<std::array<WORD, 2000>, 2000> WorldMap;
+
+	// For Network
+	SOCKET ServerSocket;
+	int RemainDataLen;
 };
 

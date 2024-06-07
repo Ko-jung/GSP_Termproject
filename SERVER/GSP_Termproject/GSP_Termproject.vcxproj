@@ -137,6 +137,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\EnumDef.h" />
+    <ClInclude Include="..\..\Common\GameUtil.h" />
+    <ClInclude Include="..\..\Common\OverExpansion.h" />
     <ClInclude Include="..\..\Common\protocol.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="Define.h" />
@@ -144,7 +146,6 @@
     <ClInclude Include="LogUtil.h" />
     <ClInclude Include="Manager\ClientMgr.h" />
     <ClInclude Include="Manager\PacketMgr.h" />
-    <ClInclude Include="OverExpansion.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

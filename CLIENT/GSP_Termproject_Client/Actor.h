@@ -3,6 +3,11 @@
 #include <Windows.h>
 #include <atlimage.h>
 #include <string>
+#include <vector>
+
+#include "../../Common/GameUtil.h"
+#include "../../Common/protocol.h"
+#include "../../Common/EnumDef.h"
 
 class Actor
 {
@@ -12,20 +17,29 @@ public:
 
 	void Update(float elapsedTime);
 	void Draw(HDC& memdc);
+	void LoadSprite();
 
 	void Move(WPARAM wParam);
 	//void SetLocation(POINT location) { Location.x = location.x; Location.y = location.y; }
 	//POINT GetLocation(POINT location) { Location.x = location.x; Location.y = location.y; }
-	void SetLocation(float x, float y) { X = x; Y = y; }
-	void GetLocation(float& x, float& y) { x = X; y = Y; }
+	void SetLocation(POSITION pos) { Position = pos; }
+	POSITION GetLocation() { return Position; }
 	void SetName(const char* name) { Name = name; }
 
+	void ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP);
+
 protected:
-	//POINT Location;
-	float X, Y;
+	POSITION Position;
 	float Speed;
-	CImage Img;
+	int	CurrentHp;
+	int	MaxHp;
+	int	Exp;
+	int	Level;
+	ACTOR_STATE State;
+	static CImage Img;
 
 	std::string Name;
+
+	std::vector<std::vector<RECT*>> Sprites;
 };
 

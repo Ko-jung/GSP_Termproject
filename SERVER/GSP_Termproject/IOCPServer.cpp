@@ -2,7 +2,7 @@
 #include "Define.h"
 #include "../../Common/EnumDef.h"
 #include "../../Common/protocol.h"
-#include "OverExpansion.h"
+#include "../../Common/OverExpansion.h"
 
 #include "LogUtil.h"
 
@@ -62,15 +62,7 @@ bool IOCPServer::BindListen(const int PortNum)
 	hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(ListenSocket), hIocp, 9999, 0);
 
-	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
-	char	accept_buf[sizeof(SOCKADDR_IN) * 2 + 32 + 100];
-
-	*(reinterpret_cast<SOCKET*>(&AcceptExpOver->_send_buf)) = c_socket;
-	ZeroMemory(&AcceptExpOver->_over, sizeof(AcceptExpOver->_over));
-	AcceptExpOver->_comp_type = COMP_TYPE::OP_ACCEPT;
-
-	AcceptEx(ListenSocket, c_socket, accept_buf, 0, sizeof(SOCKADDR_IN) + 16,
-		sizeof(SOCKADDR_IN) + 16, NULL, &AcceptExpOver->_over);
+	ReadyAccept();
 	std::cout << "Aceept Called\n";
 
 	return true;
@@ -98,34 +90,35 @@ void IOCPServer::Worker()
 		BOOL ret = GetQueuedCompletionStatus(hIocp, &num_byte, (PULONG_PTR)&iocp_key, &p_over, INFINITE);
 
 		int client_id = static_cast<int>(iocp_key);
-		OverExpansion* exp_over = reinterpret_cast<OverExpansion*>(p_over);
+		OverExpansion* Exp = reinterpret_cast<OverExpansion*>(p_over);
 
 		if (FALSE == ret)
 		{
 			int err_no = WSAGetLastError();
 			LogUtil::error_display("GQCS Error : ");
 			LogUtil::error_display(err_no);
-			//Disconnect(client_id);
-			//if (exp_over->_comp_op == COMP_OP::OP_SEND)
-			//	delete exp_over;
+			Disconnect(client_id);
+			if (Exp->_comp_type == COMP_TYPE::OP_SEND)
+				delete Exp;
 			continue;
 		}
 
 		if (0 == num_byte)
 		{
-			// if (exp_over->_comp_op == COMP_OP::OP_SEND || exp_over->_comp_op == COMP_OP::OP_RECV)
+			// if (Exp->_comp_op == COMP_OP::OP_SEND || Exp->_comp_op == COMP_OP::OP_RECV)
 			// 	ClientMgr::Instance()->Disconnect(client_id);
 		}
 
-		switch (exp_over->_comp_type)
+		switch (Exp->_comp_type)
 		{
 			case COMP_TYPE::OP_ACCEPT:
-				ProcessAccept(exp_over);
+				ProcessAccept(Exp);
 				break;
 			case COMP_TYPE::OP_RECV:
+				ClientMgr::Instance()->RecvProcess(client_id, num_byte, Exp);
 				break;
 			case COMP_TYPE::OP_SEND:
-				delete exp_over;
+				delete Exp;
 				break;
 		default:
 			break;
@@ -141,23 +134,43 @@ void IOCPServer::ThreadJoin()
 	}
 }
 
+void IOCPServer::Disconnect(int Id)
+{
+	ClientMgr::Instance()->Disconnect(Id);
+}
+
+void IOCPServer::ReadyAccept()
+{
+	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
+	char	accept_buf[sizeof(SOCKADDR_IN) * 2 + 32 + 100];
+
+	*(reinterpret_cast<SOCKET*>(&AcceptExpOver->_send_buf)) = c_socket;
+	ZeroMemory(&AcceptExpOver->_over, sizeof(AcceptExpOver->_over));
+	AcceptExpOver->_comp_type = COMP_TYPE::OP_ACCEPT;
+
+	AcceptEx(ListenSocket, c_socket, accept_buf, 0, sizeof(SOCKADDR_IN) + 16,
+		sizeof(SOCKADDR_IN) + 16, NULL, &AcceptExpOver->_over);
+}
+
 void IOCPServer::ProcessAccept(OverExpansion* exp)
 {
-	ClientMgr* ClientManager = ClientMgr::Instance();
-	if (ClientManager->GetClientCount() < MAX_USER)
+	if (ClientMgr::Instance()->GetClientCount() < MAX_USER)
 	{
-	 	int NowClientNum;
-	 	Client* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+		int NowClientNum;
+		Client* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+
+		socket->ClientNum = NowClientNum;
+		socket->Socket = (*(reinterpret_cast<SOCKET*>(exp->_send_buf)));
+
+		CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket->Socket), hIocp, NowClientNum, 0);
 	 
-	 	socket->ClientNum = NowClientNum;
-	 	socket->Socket = (*(reinterpret_cast<SOCKET*>(exp->_send_buf)));
-	 
-	 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket->Socket), hIocp, NowClientNum, 0);
-	 
+		socket->SendLoginInfo();
 	 	socket->Recv();
-	 }
-	 else
-	 {
+
+		ReadyAccept();
+	}
+	else
+	{
 	 	std::cerr << "Client MAX!" << std::endl;
 	}
 }

@@ -119,7 +119,7 @@ struct SC_MOVE_OBJECT_PACKET : PACKET {
 
 struct SC_8DIRECT_MOVE_OBJECT_PACKET : PACKET {
 	int		id;
-	short	x, y;
+	float	x, y;
 	unsigned int move_time;
 
 	SC_8DIRECT_MOVE_OBJECT_PACKET() : PACKET(SC_8DIRECT_MOVE_OBJECT) { size = sizeof(SC_8DIRECT_MOVE_OBJECT_PACKET); }
