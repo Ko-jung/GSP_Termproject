@@ -2,19 +2,20 @@
 
 #include "stdafx.h"
 #include "Define.h"
-#include "EnumDef.h"
+#include "../../Common/EnumDef.h"
+#include "../../Common/protocol.h"
 
 class OverExpansion
 {
 public:
 	WSAOVERLAPPED _over;
 	WSABUF _wsabuf;
-	char _send_buf[BUF_SIZE];
+	char _send_buf[CHAT_SIZE];
 	COMP_TYPE _comp_type;
 
 	OverExpansion()
 	{
-		_wsabuf.len = BUF_SIZE;
+		_wsabuf.len = CHAT_SIZE;
 		_wsabuf.buf = _send_buf;
 		_comp_type = COMP_TYPE::OP_RECV;
 		ZeroMemory(&_over, sizeof(_over));

@@ -10,9 +10,12 @@ public:
 
 	void Send(struct PACKET* p);
 	void Recv();
+	void RecvProcess(int byte, OverExpansion* exp);
 
 	int ClientNum;
 	SOCKET Socket;
 	OverExpansion Exp;
+
+	int RemainDataLen;
 };
 

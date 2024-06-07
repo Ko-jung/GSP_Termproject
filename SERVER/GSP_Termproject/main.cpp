@@ -1,6 +1,8 @@
 ﻿#include "stdafx.h"
 #include "Define.h"
 
+#include "../../Common/protocol.h"
+
 #include "IOCPServer.h"
 
 int main()

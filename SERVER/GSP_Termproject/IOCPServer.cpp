@@ -1,8 +1,10 @@
 ﻿#include "IOCPServer.h"
 #include "Define.h"
 #include "../../Common/EnumDef.h"
-#include "LogUtil.h"
+#include "../../Common/protocol.h"
 #include "OverExpansion.h"
+
+#include "LogUtil.h"
 
 #include "Manager/ClientMgr.h"
 #include "Client.h"
@@ -89,11 +91,8 @@ void IOCPServer::Worker()
 {
 	while (true)
 	{
-		// I/O�۾����� ���۵� ����Ʈ ���� �����ϴ� ����
 		DWORD num_byte;
-		// I/O�۾��� �Ϸ�� ���� �ڵ�� ����� �Ϸ� Ű, ���⼱ Ŭ���̾�Ʈ ���� ��ȣ
 		LONG64 iocp_key;
-		// I/O �۾��� ���۵� �� ������ OVERLAAPED ����ü �ּ�
 		WSAOVERLAPPED* p_over;
 
 		BOOL ret = GetQueuedCompletionStatus(hIocp, &num_byte, (PULONG_PTR)&iocp_key, &p_over, INFINITE);
@@ -121,24 +120,16 @@ void IOCPServer::Worker()
 		switch (exp_over->_comp_type)
 		{
 			case COMP_TYPE::OP_ACCEPT:
+				ProcessAccept(exp_over);
 				break;
 			case COMP_TYPE::OP_RECV:
 				break;
 			case COMP_TYPE::OP_SEND:
+				delete exp_over;
 				break;
 		default:
 			break;
 		}
-
-		//auto FuncIt = m_IocpFunctionMap.find(exp_over->_comp_op);
-		//if (FuncIt != m_IocpFunctionMap.end())
-		//{
-		//	FuncIt->second(client_id, num_byte, exp_over);
-		//}
-		//else
-		//{
-		//	std::cerr << "Cant Find mapping Function! _comp_op is: " << (int)exp_over->_comp_op << endl;
-		//}
 	}
 }
 
@@ -153,7 +144,7 @@ void IOCPServer::ThreadJoin()
 void IOCPServer::ProcessAccept(OverExpansion* exp)
 {
 	ClientMgr* ClientManager = ClientMgr::Instance();
-	if (ClientManager->GetClientCount() < MAXPLAYER)
+	if (ClientManager->GetClientCount() < MAX_USER)
 	{
 	 	int NowClientNum;
 	 	Client* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
@@ -164,27 +155,10 @@ void IOCPServer::ProcessAccept(OverExpansion* exp)
 	 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket->Socket), hIocp, NowClientNum, 0);
 	 
 	 	socket->Recv();
-	 
-	 	PPlayerJoin PPJ(NowClientNum % 6);
-	 	socket->SendProcess(sizeof(PPJ), &PPJ);
-	 
-	 	// Push Game Start Timer (Time to Select Weapon)
-	 	if (NowClientNum % MAXPLAYER == MAXPLAYER - 1)
-	 	{
-	 		PacketMgr::Instance()->GameBeginProcessing(NowClientNum);
-	 	}
-	 
-	 	// SendPlayerJoinPacket(m_iClientId);
-	 
-	 	cout << NowClientNum << "번 Accept" << endl;
-	 
-	 	if (!ReadyToNextAccept())
-	 	{
-	 		return;
-	 	}
 	 }
 	 else
 	 {
 	 	std::cerr << "Client MAX!" << std::endl;
 	}
 }
+ 

@@ -1,6 +1,8 @@
 #include "ClientMgr.h"
 #include "../Client.h"
 
+#include "../OverExpansion.h"
+
 #include <atomic>
 
 ClientMgr::ClientMgr():
@@ -18,6 +20,11 @@ ClientMgr::~ClientMgr()
 	{
 		delete c;
 	}
+}
+
+void ClientMgr::RecvProcess(int id, int bytes, OverExpansion* exp)
+{
+	Clients[id]->RecvProcess(bytes, exp);
 }
 
 Client* ClientMgr::GetEmptyClient(int& ClientNum)

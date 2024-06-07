@@ -36,6 +36,9 @@
     <ClCompile Include="Manager\ClientMgr.cpp">
       <Filter>Manager</Filter>
     </ClCompile>
+    <ClCompile Include="Manager\PacketMgr.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -64,6 +67,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Common\EnumDef.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Manager\PacketMgr.h">
+      <Filter>Manager</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

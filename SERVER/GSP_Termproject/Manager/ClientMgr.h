@@ -1,6 +1,8 @@
 #pragma once
 
+#include "../stdafx.h"
 #include "../Define.h"
+#include "../../../Common/protocol.h"
 #include "atomic"
 
 #include <array>
@@ -15,11 +17,13 @@ public:
 	ClientMgr();
 	~ClientMgr();
 
+	void RecvProcess(int id, int bytes, class OverExpansion* exp);
+
 	Client* GetEmptyClient(int& ClientNum);
 	int GetClientCount() { return ClientCount; }
 
 private:
-	std::array<Client*, MAXPLAYER> Clients;
+	std::array<Client*, MAX_USER> Clients;
 	std::atomic<int> ClientCount;
 };
 
