@@ -16,7 +16,7 @@ constexpr char CS_CHAT = 2;
 constexpr char CS_ATTACK = 3;			// 4 방향 공격
 constexpr char CS_TELEPORT = 4;			// RANDOM한 위치로 Teleport, Stress Test할 때 Hot Spot현상을 피하기 위해 구현
 constexpr char CS_LOGOUT = 5;			// 클라이언트에서 정상적으로 접속을 종료하는 패킷
-constexpr char CS_CUSTOM_MOVE = 6;
+constexpr char CS_8DIRECT_MOVE = 6;
 
 constexpr char SC_LOGIN_INFO = 2;
 constexpr char SC_LOGIN_FAIL = 3;
@@ -25,6 +25,7 @@ constexpr char SC_REMOVE_OBJECT = 5;
 constexpr char SC_MOVE_OBJECT = 6;
 constexpr char SC_CHAT = 7;
 constexpr char SC_STAT_CHANGE = 8;
+constexpr char SC_8DIRECT_MOVE_OBJECT = 9;
 
 constexpr int GAMESERVERPORT = 9000;
 
@@ -50,7 +51,7 @@ struct CS_MOVE_PACKET : PACKET {
 	CS_MOVE_PACKET() : PACKET(CS_MOVE) { size = sizeof(CS_MOVE_PACKET); }
 };
 
-struct CS_CUSTOM_MOVE_PACKET : PACKET {
+struct CS_8DIRECT_MOVE_PACKET : PACKET {
 	/// <summary>
 	/// 비트연산으로 현재 입력된 값을 파악
 	/// 7654 : 사용 X,
@@ -62,7 +63,7 @@ struct CS_CUSTOM_MOVE_PACKET : PACKET {
 	char		direction;
 	unsigned	move_time;
 
-	CS_CUSTOM_MOVE_PACKET() : PACKET(CS_CUSTOM_MOVE) { size = sizeof(CS_CUSTOM_MOVE_PACKET); }
+	CS_8DIRECT_MOVE_PACKET() : PACKET(CS_8DIRECT_MOVE) { size = sizeof(CS_8DIRECT_MOVE_PACKET); }
 };
 
 struct CS_CHAT_PACKET : PACKET {
@@ -114,6 +115,14 @@ struct SC_MOVE_OBJECT_PACKET : PACKET {
 	unsigned int move_time;
 
 	SC_MOVE_OBJECT_PACKET() : PACKET(SC_MOVE_OBJECT) { size = sizeof(SC_MOVE_OBJECT_PACKET); }
+};
+
+struct SC_8DIRECT_MOVE_OBJECT_PACKET : PACKET {
+	int		id;
+	short	x, y;
+	unsigned int move_time;
+
+	SC_8DIRECT_MOVE_OBJECT_PACKET() : PACKET(SC_8DIRECT_MOVE_OBJECT) { size = sizeof(SC_8DIRECT_MOVE_OBJECT_PACKET); }
 };
 
 struct SC_CHAT_PACKET : PACKET {
