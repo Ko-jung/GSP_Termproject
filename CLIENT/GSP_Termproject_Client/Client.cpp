@@ -169,14 +169,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_PAINT:
     {
-        HDC hDC = BeginPaint(hWnd, &ps);
+        hDC = BeginPaint(hWnd, &ps);
         mem1dc = CreateCompatibleDC(hDC);
-        oldBit1 = (HBITMAP)SelectObject(mem1dc, hBit1);
+        HBITMAP hBit1 = CreateCompatibleBitmap(hDC, WINWIDTH, WINHEIGHT);
+        HBITMAP oldBit1 = (HBITMAP)SelectObject(mem1dc, hBit1);
+        FillRect(mem1dc, &WindowSize, (HBRUSH)(COLOR_WINDOW + 1));
 
-        // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-        Game->Draw(hDC);
+        // TODO: 여기에 mem1dc를 사용하는 그리기 코드를 추가합니다...
+        Game->Draw(mem1dc);
+        BitBlt(hDC, 0, 0, WINWIDTH, WINHEIGHT, mem1dc, 0, 0, SRCCOPY);
 
         SelectObject(mem1dc, oldBit1);
+        DeleteObject(hBit1);
         DeleteDC(mem1dc);
         EndPaint(hWnd, &ps);
     }
@@ -185,7 +189,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         Game->Update(0.f);
         SleepEx(100, true);
-        InvalidateRect(hWnd, NULL, true);
+        InvalidateRect(hWnd, NULL, false);
         break;
     }
     //case WM_CHAR:
@@ -194,11 +198,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     //    break;
     case WM_KEYUP:
         Game->ProcessUpInput(wParam);
-        //InvalidateRect(hWnd, NULL, true);
         break;
     case WM_KEYDOWN:
         Game->ProcessDownInput(wParam);
-        //InvalidateRect(hWnd, NULL, true);
         break;
     case WM_CREATE:
     {
