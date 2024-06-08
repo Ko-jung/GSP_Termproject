@@ -3,42 +3,134 @@
 #include "Actor.h"
 
 CImage Actor::Img;
+std::vector<std::vector<std::vector<std::pair<int, int>>>> Actor::Sprites;
+int Actor::ImageSpriteWidth;
+int Actor::ImageSpriteHeight;
 
 Actor::Actor(bool IsPossess) :
-	Position(100.f, 100.f)
+	Position(100.f, 100.f),
+	Frame(0.f),
+	State(ACTOR_STATE::WALK),
+	Direction(ACTOR_DIRECTION::UP)
 {
 	if (Img.IsNull())
 		Img.Load(TEXT("Image/Player/Actor.png"));
 
-	//LoadSprite();
+	ImageSpriteWidth = 16;
+	ImageSpriteHeight = 33;
+
+	LoadSprite();
 }
 
 void Actor::Update(float elapsedTime)
 {
+	Frame += elapsedTime;
+	if (Frame > Sprites[(int)State][(int)Direction].size())
+		Frame -= Sprites[(int)State][(int)Direction].size();
 }
 
 void Actor::Draw(HDC& memdc)
 {
-	static int ImageSpriteWidth = 16;
-	static int ImageSpriteHeight = 34;
+	int BoardWidthSize = WINWIDTH / BOARDSIZE;
+	int BoardHeightSize = WINHEIGHT / BOARDSIZE;
 
-	float BoardWidthSize = WINWIDTH / BOARDSIZE;
-	float BoardHeightSize = WINHEIGHT / BOARDSIZE;
-
-	// RECT ImageDst{ ImageSpriteWidth * 0, (int)State * ImageSpriteHeight,
-	// 	ImageSpriteWidth * 0 + ImageSpriteWidth, (int)State * ImageSpriteHeight + ImageSpriteHeight };
-	RECT ImageDst{ WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - BoardHeightSize,
+	RECT ImageDst{ WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - (BoardHeightSize * 3),
 		BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
-	RECT ImageSrc{ ImageSpriteWidth * 0, (int)0 * ImageSpriteHeight,
-		ImageSpriteWidth * 0 + ImageSpriteWidth, (int)0 * ImageSpriteHeight + ImageSpriteHeight };
 
-	Img.Draw(memdc, ImageDst, ImageSrc);
+	{	// Draw Body
+		int SrcX = Sprites[(int)State][(int)Direction][(int)Frame].first;
+		int SrcY = Sprites[(int)State][(int)Direction][(int)Frame].second;
+		RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
+		Img.Draw(memdc, ImageDst, ImageSrc);
+	}
+
+	{	// Draw Arm
+		int SrcX = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].first;
+		int SrcY = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].second;
+		RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
+		Img.Draw(memdc, ImageDst, ImageSrc);
+	}
 }
 
 void Actor::LoadSprite()
 {
+	if (not Sprites.empty()) return;
 
-	//Sprites.emplace_back();
+	std::vector<int> IndexList{ 0,1,2,1 };
+
+	std::vector< std::vector<std::pair<int, int>>> TempVector;
+
+	{	// BODY
+		TempVector.clear();
+		for(const auto& i : IndexList)
+		{	// IDLE
+			std::vector< std::pair<int, int>> TempTempVector;
+			TempTempVector.emplace_back(std::make_pair<int, int>(0, ImageSpriteHeight * i));
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// WALK
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 2; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (1 + j), ImageSpriteHeight * i));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// RUN
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 2; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (i * 2 + j), ImageSpriteHeight * 3));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+	}
+
+	{	// ARM
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// IDLE
+			std::vector< std::pair<int, int>> TempTempVector;
+			TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * 6, ImageSpriteHeight * i));
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// WALK
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 2; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (7 + j), ImageSpriteHeight * i));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// RUN
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 2; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (i * 2 + j + 6), ImageSpriteHeight * 3));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+	}
+
+	TempVector.clear();
 }
 
 void Actor::Move(WPARAM wParam)

@@ -24,6 +24,8 @@ GameMgr::GameMgr() :
 
 	WorldImageTile.Load(TEXT("Image/Map/MapImage.png"));
 	LoadBoard();
+
+	PrevTime = std::chrono::system_clock::now();
 }
 
 GameMgr::~GameMgr()
@@ -78,8 +80,11 @@ void GameMgr::Draw(HDC& memdc)
 	OwnActor->Draw(memdc);
 }
 
-void GameMgr::Update(float elapsedTime)
+void GameMgr::Update()
 {
+	float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - PrevTime).count() / 1000.f;
+	PrevTime = std::chrono::system_clock::now();
+
 	OwnActor->Update(elapsedTime);
 
 	SendPosition();
@@ -211,8 +216,8 @@ void GameMgr::DrawBoard(HDC& memdc)
 	{
 		for (int x = 0; x < BOARDSIZE; x++)
 		{
-			int DrawX = pos.X + x - BOARDSIZE / 2;
-			int DrawY = pos.Y + y - BOARDSIZE / 2;
+			int DrawX = (int)pos.X + x - BOARDSIZE / 2;
+			int DrawY = (int)pos.Y + y - BOARDSIZE / 2;
 
 			if (DrawX < 0 || DrawX >= W_WIDTH || DrawY < 0 || DrawY >= W_WIDTH) continue;
 

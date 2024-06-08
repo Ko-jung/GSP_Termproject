@@ -4,6 +4,7 @@
 #include <atlimage.h>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "../../Common/GameUtil.h"
 #include "../../Common/protocol.h"
@@ -36,10 +37,14 @@ protected:
 	int	Exp;
 	int	Level;
 	ACTOR_STATE State;
-	static CImage Img;
+	ACTOR_DIRECTION Direction;
+	float Frame;
 
 	std::string Name;
 
-	std::vector<std::vector<RECT*>> Sprites;
+	static CImage Img;
+	static std::vector<std::vector<std::vector<std::pair<int, int>>>> Sprites;
+	static int ImageSpriteWidth;
+	static int ImageSpriteHeight;
 };
 

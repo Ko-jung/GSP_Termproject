@@ -4,8 +4,8 @@
 #include <Windows.h>
 #include <thread>
 #include <unordered_map>
-#include "framework.h"
 #include <atlimage.h>
+#include "framework.h"
 
 #include "../../Common/protocol.h"
 #include "../../Common/OverExpansion.h"
@@ -33,7 +33,7 @@ public:
 public:
 	//Game Logic
 	void Draw(HDC& memdc);
-	void Update(float elapsedTime);
+	void Update();
 	void ProcessUpInput(WPARAM wParam);
 	void ProcessDownInput(WPARAM wParam);
 
@@ -58,6 +58,8 @@ protected:
 
 	CImage WorldImageTile;
 	std::array<std::array<WORD, 2000>, 2000> WorldMap;
+
+	std::chrono::system_clock::time_point PrevTime;
 
 	// For Network
 	SOCKET ServerSocket;

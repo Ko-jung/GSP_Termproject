@@ -187,7 +187,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_TIMER:
     {
-        Game->Update(0.f);
+        Game->Update();
         SleepEx(100, true);
         InvalidateRect(hWnd, NULL, false);
         break;
