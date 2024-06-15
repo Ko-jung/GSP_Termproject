@@ -4,9 +4,6 @@
 #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
 #endif
 
-#include <WS2tcpip.h>
-#pragma comment (lib, "WS2_32.LIB")
-
 #include "framework.h"
 #include "Define.h"
 #include "Client.h"
@@ -17,7 +14,7 @@
 
 #define MAX_LOADSTRING 100
 
-std::shared_ptr<GameMgr> Game{ nullptr };
+GameMgr* Game{ nullptr };
 char IPChar[20];
 
 // 전역 변수:
@@ -207,7 +204,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         AdjustWindowRect(&WindowSize, WS_OVERLAPPEDWINDOW, false);
         MoveWindow(hWnd, 150, 70, WindowSize.right - WindowSize.left, WindowSize.bottom - WindowSize.top, false);
 
-        Game = std::make_shared<GameMgr>();
+        Game = GameMgr::Instance();
 
         // 시작할 때 서버의 IP주소를 입력 받는다.
         std::cout << "Input IP :";

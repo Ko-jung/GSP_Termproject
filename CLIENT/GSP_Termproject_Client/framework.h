@@ -14,6 +14,9 @@
 #include <memory.h>
 #include <tchar.h>
 
+#include <WS2tcpip.h>
+#pragma comment (lib, "WS2_32.LIB")
+
 #include <string>
 #include <array>
 #include <iostream>

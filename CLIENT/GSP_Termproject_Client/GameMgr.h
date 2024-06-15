@@ -9,12 +9,15 @@
 
 #include "../../Common/protocol.h"
 #include "../../Common/OverExpansion.h"
+#include "Define.h"
 
 class Actor;
 
 class GameMgr
 {
 public:
+	SINGTON(GameMgr);
+
 	GameMgr();
 	virtual ~GameMgr();
 
@@ -43,6 +46,7 @@ public:
 	void SendPosition();
 
 	SOCKET& GetSocket() { return ServerSocket; }
+	Actor* GetOwnActor() { return OwnActor.get(); }
 
 	void SetOwnActorID(const char* ID);
 

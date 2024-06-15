@@ -144,17 +144,18 @@ void GameMgr::DrawBoard(HDC& memdc)
 	POSITION pos = OwnActor->GetLocation();
 	//std::cout << X << ", " << Y << std::endl;
 
-	for (int y = 0; y < BOARDSIZE; y++)
+	for (int y = 0; y < BOARDSIZE + 2; y++)
 	{
-		for (int x = 0; x < BOARDSIZE; x++)
+		for (int x = 0; x < BOARDSIZE + 2; x++)
 		{
-			int DrawX = (int)pos.X + x - BOARDSIZE / 2;
-			int DrawY = (int)pos.Y + y - BOARDSIZE / 2;
+			int DrawX = (int)pos.X + x - BOARDSIZE / 2 - 1;
+			int DrawY = (int)pos.Y + y - BOARDSIZE / 2 - 1;
 
 			if (DrawX < 0 || DrawX >= W_WIDTH || DrawY < 0 || DrawY >= W_WIDTH) continue;
 
 			int BoardDrawSize = WINWIDTH / BOARDSIZE;
-			RECT TileDest{ x * BoardDrawSize, y * BoardDrawSize, (x + 1) * BoardDrawSize, (y + 1) * BoardDrawSize };
+			RECT TileDest{ (x - (pos.X - (int)pos.X) - 1) * BoardDrawSize, (y - (pos.Y - (int)pos.Y) - 1) * BoardDrawSize,
+				(x + 1 - (pos.X - (int)pos.X) - 1) * BoardDrawSize, (y + 1 - (pos.Y - (int)pos.Y) - 1) * BoardDrawSize };
 			switch (WorldMap[DrawY][DrawX])
 			{
 			case (BYTE)MAP_INFO::WALLS_BLOCK:

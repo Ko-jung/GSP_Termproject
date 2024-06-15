@@ -20,12 +20,11 @@ public:
 	void Draw(HDC& memdc);
 	void LoadSprite();
 
+	RECT GetRectDstWithPos();
 	void Move(float elapsedTime);
 	void InversionImage(HDC& memdc,RECT dstRect, RECT srcRect);
 	void ProcessUpInput(WPARAM wParam);
 	void ProcessDownInput(WPARAM wParam);
-	//void SetLocation(POINT location) { Location.x = location.x; Location.y = location.y; }
-	//POINT GetLocation(POINT location) { Location.x = location.x; Location.y = location.y; }
 	
 	void SetLocation(POSITION pos) { Position = pos; }
 	void SetName(const char* name) { Name = name; }
@@ -40,6 +39,8 @@ public:
 	void ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP);
 
 protected:
+	bool IsPossessed;
+
 	POSITION Position;
 	float Speed;
 	int	CurrentHp;

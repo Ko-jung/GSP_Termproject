@@ -130,6 +130,7 @@
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="GameMgr.cpp" />
+    <ClCompile Include="GamePlayStatic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\EnumDef.h" />
@@ -139,6 +140,7 @@
     <ClInclude Include="Define.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameMgr.h" />
+    <ClInclude Include="GamePlayStatic.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>

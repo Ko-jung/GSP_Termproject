@@ -2,12 +2,15 @@
 #include "Define.h"
 #include "Actor.h"
 
+#include "GamePlayStatic.h"
+
 CImage Actor::Img;
 std::vector<std::vector<std::vector<std::pair<int, int>>>> Actor::Sprites;
 int Actor::ImageSpriteWidth;
 int Actor::ImageSpriteHeight;
 
 Actor::Actor(bool IsPossess) :
+	IsPossessed(IsPossess),
 	Position(100.f, 100.f),
 	Speed(5.f),
 	State(ACTOR_STATE::WALK),
@@ -28,7 +31,7 @@ void Actor::Update(float elapsedTime)
 {
 	Frame += elapsedTime;
 	if (Frame > Sprites[(int)State][(int)Direction].size())
-		Frame -= Sprites[(int)State][(int)Direction].size();
+		Frame = 0.f;
 
 	Move(elapsedTime);
 }
@@ -38,9 +41,10 @@ void Actor::Draw(HDC& memdc)
 	int BoardWidthSize = WINWIDTH / BOARDSIZE;
 	int BoardHeightSize = WINHEIGHT / BOARDSIZE;
 
+	float ImageRatio = (float)ImageSpriteHeight / ImageSpriteWidth;
+
 	RECT ImageDst{ WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - (BoardHeightSize * 3),
 		BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
-	//Img.SetTransparentColor((COLORREF)(132));
 
 	{	// Draw Body
 
@@ -153,6 +157,36 @@ void Actor::LoadSprite()
 	}
 
 	TempVector.clear();
+}
+
+RECT Actor::GetRectDstWithPos()
+{
+	float Size = 1.f;
+	int BoardWidthSize = WINWIDTH / BOARDSIZE;
+	int BoardHeightSize = WINHEIGHT / BOARDSIZE;
+
+	int DstWidth = BoardWidthSize * Size;
+	int DstHeight = BoardHeightSize * Size;
+
+	POSITION OwnActorPos = GamePlayStatic::Instance()->GetOwnActorPosition();
+
+	int DstPosX = (Position.X - OwnActorPos.X) * BoardWidthSize;
+	int DstPosY = (Position.Y - OwnActorPos.Y) * BoardHeightSize;
+
+	RECT ReturnRect = {};
+
+	if (IsPossessed)
+	{
+		ReturnRect = { WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - (BoardHeightSize * 3),
+		BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
+	}
+	else
+	{
+		ReturnRect = { WINWIDTH / 2 - BoardWidthSize + DstPosX, WINHEIGHT / 2 - (BoardHeightSize * 3) + DstPosY,
+		BoardWidthSize + WINWIDTH / 2 + DstPosX, BoardHeightSize + WINHEIGHT / 2 + DstPosY };
+	}
+
+	return ReturnRect;
 }
 
 void Actor::Move(float elapsedTime)
