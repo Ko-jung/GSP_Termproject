@@ -23,6 +23,8 @@ public:
 	Client* GetEmptyClient(int& ClientNum);
 	int GetClientCount() { return ClientCount; }
 
+	void MapCollisionCheck(int id);
+
 	// From Process Packet
 	void ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c);
 	void ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c);

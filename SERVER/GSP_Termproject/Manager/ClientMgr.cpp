@@ -3,9 +3,11 @@
 
 #include "../../../Common/OverExpansion.h"
 
+#include "MapMgr.h"
+
 #include <atomic>
 
-ClientMgr::ClientMgr():
+ClientMgr::ClientMgr() :
 	ClientCount(0)
 {
 	for (auto& c : Clients)
@@ -61,7 +63,7 @@ Client* ClientMgr::GetEmptyClient(int& ClientNum)
 				//);
 
 
-				if (succ) 
+				if (succ)
 				{
 					ClientNum = i;
 					ClientCount++;
@@ -76,6 +78,26 @@ Client* ClientMgr::GetEmptyClient(int& ClientNum)
 		}
 	}
 	return nullptr;
+}
+
+void ClientMgr::MapCollisionCheck(int id)
+{
+	POSITION TargetPos = Clients[id]->Position;
+	RECT TargetCollisionBox = Clients[id]->GetCollisionBox();
+	MapMgr* Manager = MapMgr::Instance();
+
+	if (Manager->GetMapInfo(TargetCollisionBox.left, TargetCollisionBox.top) == (WORD)MAP_INFO::WALLS_BLOCK)
+	{
+	}
+	if (Manager->GetMapInfo(TargetCollisionBox.left, TargetCollisionBox.bottom) == (WORD)MAP_INFO::WALLS_BLOCK)
+	{
+	}
+	if (Manager->GetMapInfo(TargetCollisionBox.right, TargetCollisionBox.top) == (WORD)MAP_INFO::WALLS_BLOCK)
+	{
+	}
+	if (Manager->GetMapInfo(TargetCollisionBox.right, TargetCollisionBox.bottom) == (WORD)MAP_INFO::WALLS_BLOCK)
+	{
+	}
 }
 
 void ClientMgr::ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c)

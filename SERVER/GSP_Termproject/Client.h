@@ -19,6 +19,8 @@ public:
 	void StressTestMove(char Direction);
 	void Move(char bitDirection, char Direction);
 
+	RECT GetCollisionBox();
+
 	void SendLoginInfo();
 	void SendStressTestMovePos();
 	void SendMovePos();
@@ -34,8 +36,12 @@ public:
 	ACTOR_DIRECTION Direction;
 	float Speed;
 	CLIENT_STATE State;
+	float Size;
 
 	std::mutex StateMutex;
 	int LastMoveTime;
+
+	static int ImageSpriteWidth;
+	static int ImageSpriteHeight;
 };
 

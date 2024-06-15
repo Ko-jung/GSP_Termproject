@@ -7,6 +7,7 @@
 #include "LogUtil.h"
 
 #include "Manager/ClientMgr.h"
+#include "Manager/MapMgr.h"
 #include "Client.h"
 
 IOCPServer::IOCPServer()
@@ -20,6 +21,9 @@ IOCPServer::~IOCPServer()
 
 bool IOCPServer::Init(const int WNum)
 {
+	// MapMgr Init
+	MapMgr::Instance()->Init();
+
 	WSADATA WSAData;
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
 		return false;
