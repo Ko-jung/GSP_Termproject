@@ -16,7 +16,6 @@ void CALLBACK send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p
 
 GameMgr::GameMgr() :
 	ElapsedTime(0.f),
-	KeyInputInfo(0),
 	SerialNum(-1),
 	RemainDataLen(0)
 {
@@ -71,7 +70,7 @@ void GameMgr::Draw(HDC& memdc)
 {
 	DrawBoard(memdc);
 
-	for (const auto& a : OtherActor)
+	for (const auto& a : OtherActors)
 	{
 		a.second->Draw(memdc);
 	}
@@ -93,80 +92,13 @@ void GameMgr::Update()
 }
 
 void GameMgr::ProcessUpInput(WPARAM wParam)
-{
-	// Check Input Move Key
-	int Key = 0;
-
-	switch (wParam)
-	{
-	case 'w':
-	case 'W':
-	case VK_UP:
-	{
-		KeyInputInfo = KeyInputInfo & 0b0111;
-		break;
-	}
-	case 'a':
-	case 'A':
-	case VK_LEFT:
-	{
-		KeyInputInfo = KeyInputInfo & 0b1101;
-		break;
-	}
-	case 's':
-	case 'S':
-	case VK_DOWN:
-	{
-		KeyInputInfo = KeyInputInfo & 0b1011;
-		break;
-	}
-	case 'd':
-	case 'D':
-	case VK_RIGHT:
-	{
-		KeyInputInfo = KeyInputInfo & 0b1110;
-		break;
-	}
-	default:
-		break;
-	}
+{	
+	OwnActor->ProcessUpInput(wParam);
 }
 
 void GameMgr::ProcessDownInput(WPARAM wParam)
 {
-	switch (wParam)
-	{
-	case 'w':
-	case 'W':
-	case VK_UP:
-	{
-		KeyInputInfo = KeyInputInfo | 0b1000;
-		break;
-	}
-	case 'a':
-	case 'A':
-	case VK_LEFT:
-	{
-		KeyInputInfo = KeyInputInfo | 0b0010;
-		break;
-	}
-	case 's':
-	case 'S':
-	case VK_DOWN:
-	{
-		KeyInputInfo = KeyInputInfo | 0b0100;
-		break;
-	}
-	case 'd':
-	case 'D':
-	case VK_RIGHT:
-	{
-		KeyInputInfo = KeyInputInfo | 0b0001;
-		break;
-	}
-	default:
-		break;
-	}
+	OwnActor->ProcessDownInput(wParam);
 }
 
 void GameMgr::LoadBoard()
@@ -250,10 +182,12 @@ void GameMgr::DrawBoard(HDC& memdc)
 
 void GameMgr::SendPosition()
 {
-	POSITION Pos = OwnActor->GetLocation();
+	// POSITION Pos = OwnActor->GetLocation();
+
 
 	CS_8DIRECT_MOVE_PACKET CMP;
-	CMP.direction = KeyInputInfo;
+	CMP.bitDirection = OwnActor->GetKeyInputInfo();
+	CMP.direction = (char)OwnActor->GetDirection();
 
 	Send(&CMP);
 }
@@ -319,7 +253,23 @@ void GameMgr::ProcessRecv(PACKET* packet)
 	case SC_8DIRECT_MOVE_OBJECT:
 	{
 		SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP = reinterpret_cast<SC_8DIRECT_MOVE_OBJECT_PACKET*>(packet);
-		OwnActor->SetLocation({SDMOP->x, SDMOP->y});
+	
+		if (SDMOP->id == SerialNum)
+		{
+			OwnActor->ProcessMove(SDMOP);
+		}
+		else
+		{
+			Actor* TargetActor = nullptr;
+			if (OtherActors.find(SDMOP->id) == OtherActors.end())
+			{
+				std::cout << "Get SC_8DIRECT_MOVE_OBJECT_PACKET but id:" << SDMOP->id << " is Cant Find!" << std::endl;
+				return;
+			}
+
+			OtherActors[SDMOP->id]->ProcessMove(SDMOP);
+		}
+		
 		break;
 	}
 	default:

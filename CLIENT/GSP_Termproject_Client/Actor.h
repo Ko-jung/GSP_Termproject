@@ -20,14 +20,24 @@ public:
 	void Draw(HDC& memdc);
 	void LoadSprite();
 
-	void Move(WPARAM wParam);
+	void Move(float elapsedTime);
+	void InversionImage(HDC& memdc,RECT dstRect, RECT srcRect);
+	void ProcessUpInput(WPARAM wParam);
+	void ProcessDownInput(WPARAM wParam);
 	//void SetLocation(POINT location) { Location.x = location.x; Location.y = location.y; }
 	//POINT GetLocation(POINT location) { Location.x = location.x; Location.y = location.y; }
+	
 	void SetLocation(POSITION pos) { Position = pos; }
-	POSITION GetLocation() { return Position; }
 	void SetName(const char* name) { Name = name; }
+	void SetDirection(ACTOR_DIRECTION direction) { Direction = direction; }
+
+	POSITION GetLocation() { return Position; }
+	ACTOR_DIRECTION GetDirection() { return Direction; }
+	char GetKeyInputInfo() { return KeyInputInfo; }
 
 	void ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP);
+	void ProcessMove(SC_MOVE_OBJECT_PACKET* SLIP);
+	void ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP);
 
 protected:
 	POSITION Position;
@@ -38,6 +48,7 @@ protected:
 	int	Level;
 	ACTOR_STATE State;
 	ACTOR_DIRECTION Direction;
+	char KeyInputInfo;
 	float Frame;
 
 	std::string Name;

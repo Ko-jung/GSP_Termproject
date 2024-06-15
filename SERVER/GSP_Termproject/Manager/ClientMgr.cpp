@@ -101,5 +101,5 @@ void ClientMgr::ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c)
 
 void ClientMgr::ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c)
 {
-	c->Move(CMP->direction);
+	c->Move(CMP->bitDirection, CMP->direction);
 }

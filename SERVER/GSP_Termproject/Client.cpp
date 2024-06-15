@@ -94,38 +94,37 @@ void Client::StressTestMove(char Direction)
 	SendStressTestMovePos();
 }
 
-void Client::Move(char Direction)
+void Client::Move(char BitDirection, char Direction)
 {
-	char BitDirection = Direction;
-
 	// Checking RIGHT
-	if (Direction & 0b0001)
+	if (BitDirection & 0b0001)
 	{
 		if (Position.X < W_WIDTH - 1)
 			Position.X += Speed;
 	}
 
 	// Checking LEFT
-	if (Direction & 0b0010)
+	if (BitDirection & 0b0010)
 	{
 		if (Position.X > 0)
 			Position.X -= Speed;
 	}
 
 	// Checking DOWN
-	if (Direction & 0b0100)
+	if (BitDirection & 0b0100)
 	{
 		if (Position.Y < W_HEIGHT - 1)
 			Position.Y += Speed;
 	}
 
 	// Checking UP
-	if (Direction & 0b1000)
+	if (BitDirection & 0b1000)
 	{
 		if (Position.Y > 0)
 			Position.Y -= Speed;
 	}
 
+	this->Direction = (ACTOR_DIRECTION)Direction;
 	SendMovePos();
 }
 
@@ -158,6 +157,7 @@ void Client::SendMovePos()
 	SDMOP.id = ClientNum;
 	SDMOP.x = Position.X;
 	SDMOP.y = Position.Y;
+	SDMOP.direction = (char)Direction;
 	SDMOP.move_time = LastMoveTime;
 	Send(&SDMOP);
 }

@@ -49,12 +49,11 @@ public:
 protected:
 	//std::vector<bool> KeyInputInfo;
 	float ElapsedTime;
-	char KeyInputInfo;
 	
 	std::shared_ptr<Actor> OwnActor;
 	int SerialNum;
 
-	std::unordered_map<int, std::shared_ptr<Actor>> OtherActor;
+	std::unordered_map<int, std::shared_ptr<Actor>> OtherActors;
 
 	CImage WorldImageTile;
 	std::array<std::array<WORD, 2000>, 2000> WorldMap;

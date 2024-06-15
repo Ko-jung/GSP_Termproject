@@ -17,7 +17,7 @@ public:
 	void RecvProcess(int byte, OverExpansion* exp);
 
 	void StressTestMove(char Direction);
-	void Move(char Direction);
+	void Move(char bitDirection, char Direction);
 
 	void SendLoginInfo();
 	void SendStressTestMovePos();
@@ -31,6 +31,7 @@ public:
 
 	char PlayerName[NAME_SIZE];
 	POSITION Position;
+	ACTOR_DIRECTION Direction;
 	float Speed;
 	CLIENT_STATE State;
 

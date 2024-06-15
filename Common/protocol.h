@@ -60,7 +60,8 @@ struct CS_8DIRECT_MOVE_PACKET : PACKET {
 	/// 1 : LEFT,
 	/// 0 : RIGHT
 	/// </summary>
-	char		direction;
+	char		bitDirection;
+	char		direction;		// See Direction
 	unsigned	move_time;
 
 	CS_8DIRECT_MOVE_PACKET() : PACKET(CS_8DIRECT_MOVE) { size = sizeof(CS_8DIRECT_MOVE_PACKET); }
@@ -120,6 +121,7 @@ struct SC_MOVE_OBJECT_PACKET : PACKET {
 struct SC_8DIRECT_MOVE_OBJECT_PACKET : PACKET {
 	int		id;
 	float	x, y;
+	char	direction;  // 0 : UP, 1 : DOWN, 2 : LEFT, 3 : RIGHT
 	unsigned int move_time;
 
 	SC_8DIRECT_MOVE_OBJECT_PACKET() : PACKET(SC_8DIRECT_MOVE_OBJECT) { size = sizeof(SC_8DIRECT_MOVE_OBJECT_PACKET); }
