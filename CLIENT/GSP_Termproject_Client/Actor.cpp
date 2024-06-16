@@ -33,7 +33,7 @@ Actor::Actor(bool IsPossess) :
 
 void Actor::Update(float elapsedTime)
 {
-	Frame += elapsedTime;
+	Frame += elapsedTime * 3.f;
 	if (Frame > Sprites[(int)State][(int)Direction].size() - FLT_MIN)
 		Frame = 0.f;
 
@@ -345,6 +345,7 @@ void Actor::InversionImage(HDC& memdc, RECT dstRect, RECT srcImageRect)
 
 void Actor::ChangeState(ACTOR_STATE state)
 {
+	if (State == state) return;
 	State = state;
 	Frame = 0;
 }
