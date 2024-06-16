@@ -87,6 +87,11 @@ void GameMgr::Update()
 	float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - PrevTime).count() / 1000.f;
 	PrevTime = std::chrono::system_clock::now();
 
+	for (const auto& a : OtherActors)
+	{
+		a.second->Update(elapsedTime);
+	}
+
 	OwnActor->Update(elapsedTime);
 
 	SendPosition();
@@ -210,6 +215,11 @@ void GameMgr::ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP)
 	OtherActors.insert(std::make_pair(SAOP->id, NewActor));
 }
 
+void GameMgr::ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP)
+{
+	OtherActors.erase(SROP->id);
+}
+
 void GameMgr::SetOwnActorID(const char* ID)
 {
 	OwnActor->SetName(ID);
@@ -264,7 +274,10 @@ void GameMgr::ProcessRecv(PACKET* packet)
 		break;
 	}
 	case SC_REMOVE_OBJECT:
+	{
+		ProcessRemoveObject(reinterpret_cast<SC_REMOVE_OBJECT_PACKET*>(packet));
 		break;
+	}
 	case SC_MOVE_OBJECT:
 		break;
 	case SC_CHAT:

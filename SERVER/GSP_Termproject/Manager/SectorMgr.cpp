@@ -22,8 +22,8 @@ void SectorMgr::Remove(Client* Target)
 
 void SectorMgr::MoveSector(Client* Target, int TargetPrevSectorX, int TargetPrevSectorY)
 {
-	Sector& PrevSectorSet = Sectors[TargetPrevSectorX][TargetPrevSectorY];
-	Sector& CurrSectorSet = Sectors[Target->Position.X / SECTORSIZE][Target->Position.Y / SECTORSIZE];
+	Sector& PrevSectorSet = Sectors[TargetPrevSectorY][TargetPrevSectorX];
+	Sector& CurrSectorSet = Sectors[Target->Position.Y / SECTORSIZE][Target->Position.X / SECTORSIZE];
 
 	PrevSectorSet.SectorLock.lock();
 	PrevSectorSet.SectorClient.erase(Target);

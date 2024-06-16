@@ -6,8 +6,6 @@
 #include "../Client.h"
 //#include "../TimerEvent.h"
 
-#include <mutex>
-
 void PacketMgr::ProcessPacket(PACKET* packet, Client* c)
 {
 	switch (packet->type)

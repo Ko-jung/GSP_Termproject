@@ -158,7 +158,7 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 		}
 }
 
-void ClientMgr::SendAppPlayerUseSector(Client* c)
+void ClientMgr::SendAddPlayerUseSector(Client* c)
 {
 	int	CurrSectorXPos = c->Position.X / SECTORSIZE;
 	int CurrSectorYPos = c->Position.Y / SECTORSIZE;
@@ -210,7 +210,7 @@ void ClientMgr::ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c)
 	SectorMgr::Instance()->Insert(c);
 	// ==========
 
-	SendAppPlayerUseSector(c);
+	SendAddPlayerUseSector(c);
 }
 
 void ClientMgr::ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c)

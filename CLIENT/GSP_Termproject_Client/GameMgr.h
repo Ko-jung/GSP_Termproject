@@ -47,6 +47,7 @@ public:
 	void SendPosition();
 
 	void ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP);
+	void ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP);
 
 	SOCKET& GetSocket() { return ServerSocket; }
 	Actor* GetOwnActor() { return OwnActor.get(); }
