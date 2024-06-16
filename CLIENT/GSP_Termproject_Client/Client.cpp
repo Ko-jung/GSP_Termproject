@@ -8,7 +8,7 @@
 #include "Define.h"
 #include "Client.h"
 
-#include "GameMgr.h"
+#include "Manager/GameMgr.h"
 #include <memory>
 #include <iostream>
 

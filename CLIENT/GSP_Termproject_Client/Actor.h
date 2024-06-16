@@ -54,6 +54,9 @@ protected:
 	char KeyInputInfo;
 	float Frame;
 
+	// No Use NOW
+	float Size;
+
 	std::string Name;
 
 	static CImage Img;

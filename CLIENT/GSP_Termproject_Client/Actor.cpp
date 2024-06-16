@@ -3,6 +3,7 @@
 #include "Actor.h"
 
 #include "GamePlayStatic.h"
+#include "Manager/MapMgr.h"
 
 CImage Actor::Img;
 std::vector<std::vector<std::vector<std::pair<int, int>>>> Actor::Sprites;
@@ -16,7 +17,8 @@ Actor::Actor(bool IsPossess) :
 	State(ACTOR_STATE::WALK),
 	Direction(ACTOR_DIRECTION::LEFT),
 	KeyInputInfo(0),
-	Frame(0.f)
+	Frame(0.f),
+	Size(1.f)
 {
 	if (Img.IsNull())
 		Img.Load(TEXT("Image/Player/Actor.png"));
@@ -45,7 +47,9 @@ void Actor::Draw(HDC& memdc)
 	RECT ImageDst;
 	if (IsPossessed)
 	{
-		ImageDst = { WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - (BoardHeightSize * 3),
+		//ImageDst = { WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - (BoardHeightSize * 3),
+		//	BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
+		ImageDst = { WINWIDTH / 2, WINHEIGHT / 2 - (BoardHeightSize),
 			BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
 	}
 	else
@@ -54,7 +58,7 @@ void Actor::Draw(HDC& memdc)
 		int DstPosX = (Position.X - OwnActorPos.X) * BoardWidthSize;
 		int DstPosY = (Position.Y - OwnActorPos.Y) * BoardHeightSize;
 
-		ImageDst = { WINWIDTH / 2 - BoardWidthSize + DstPosX, WINHEIGHT / 2 - (BoardHeightSize * 3) + DstPosY,
+		ImageDst = { WINWIDTH / 2 + DstPosX, WINHEIGHT / 2 - (BoardHeightSize) +DstPosY,
 			BoardWidthSize + WINWIDTH / 2 + DstPosX, BoardHeightSize + WINHEIGHT / 2 + DstPosY };
 	}
 
@@ -112,7 +116,7 @@ void Actor::LoadSprite()
 
 	{	// BODY
 		TempVector.clear();
-		for(const auto& i : IndexList)
+		for (const auto& i : IndexList)
 		{	// IDLE
 			std::vector< std::pair<int, int>> TempTempVector;
 			TempTempVector.emplace_back(std::make_pair<int, int>(0, ImageSpriteHeight * i));
@@ -186,8 +190,8 @@ void Actor::LoadSprite()
 RECT Actor::GetRectDstWithPos()
 {
 	float Size = 1.f;
-	int BoardWidthSize = WINWIDTH / BOARDSIZE;
-	int BoardHeightSize = WINHEIGHT / BOARDSIZE;
+	int BoardWidthSize = WINWIDTH / BOARDSIZE / 2;
+	int BoardHeightSize = WINHEIGHT / BOARDSIZE / 2;
 
 	int DstWidth = BoardWidthSize * Size;
 	int DstHeight = BoardHeightSize * Size;
@@ -215,33 +219,108 @@ RECT Actor::GetRectDstWithPos()
 
 void Actor::Move(float elapsedTime)
 {
+	POSITION NewPos = Position;
+	MapMgr* MapInstance = MapMgr::Instance();
+	std::array<std::array<WORD, 2000>, 2000>* abcd = MapInstance->GetMap();
+	//float NewPosRight = NewPos.X + (float)ImageSpriteWidth / BOARDSIZE * Size;
+	//float NewPosBottom = NewPos.Y + (float)ImageSpriteHeight/ BOARDSIZE * Size;
+
 	// Checking RIGHT
 	if (KeyInputInfo & 0b0001)
 	{
-		if (Position.X < W_WIDTH - 1)
-			Position.X += Speed * elapsedTime;
+		if (NewPos.X < W_WIDTH - 1)
+			NewPos.X += Speed * elapsedTime;
+
+		float NewPosRight = NewPos.X + (float)1 * Size;
+		float NewPosBottom = NewPos.Y + (float)1 * Size;
+		if ((MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPos.Y)== MAP_INFO::WALLS_BLOCK || 
+			(MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPosBottom) == MAP_INFO::WALLS_BLOCK)
+		{
+			NewPos.X = Position.X;
+		}
 	}
 
 	// Checking LEFT
 	if (KeyInputInfo & 0b0010)
 	{
-		if (Position.X > 0)
-			Position.X -= Speed * elapsedTime;
+		if (NewPos.X > 0)
+			NewPos.X -= Speed * elapsedTime;
+
+		float NewPosRight = NewPos.X + (float)1 * Size;
+		float NewPosBottom = NewPos.Y + (float)1 * Size;
+		if ((MAP_INFO)MapInstance->GetMapInfo(NewPos.X, NewPos.Y) == MAP_INFO::WALLS_BLOCK ||
+			(MAP_INFO)MapInstance->GetMapInfo(NewPos.X, NewPosBottom) == MAP_INFO::WALLS_BLOCK)
+		{
+			NewPos.X = Position.X;
+		}
 	}
 
 	// Checking DOWN
 	if (KeyInputInfo & 0b0100)
 	{
-		if (Position.Y < W_HEIGHT - 1)
-			Position.Y += Speed * elapsedTime;
+		if (NewPos.Y < W_HEIGHT - 1)
+			NewPos.Y += Speed * elapsedTime;
+
+		float NewPosRight = NewPos.X + (float)1 * Size;
+		float NewPosBottom = NewPos.Y + (float)1 * Size;
+		MAP_INFO aaa = (MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPosBottom);
+		MAP_INFO bbb = (MAP_INFO)MapInstance->GetMapInfo(NewPos.X, NewPosBottom);
+
+		if ((MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPosBottom) == MAP_INFO::WALLS_BLOCK ||
+			(MAP_INFO)MapInstance->GetMapInfo(NewPos.X, NewPosBottom) == MAP_INFO::WALLS_BLOCK)
+		{
+			NewPos.Y = Position.Y;
+		}
 	}
 
 	// Checking UP
 	if (KeyInputInfo & 0b1000)
 	{
-		if (Position.Y > 0)
-			Position.Y -= Speed * elapsedTime;
+		if (NewPos.Y > 0)
+			NewPos.Y -= Speed * elapsedTime;
+
+		float NewPosRight = NewPos.X + (float)1 * Size;
+		float NewPosBottom = NewPos.Y + (float)1 * Size;
+		if ((MAP_INFO)MapInstance->GetMapInfo(NewPos.X, NewPos.Y) == MAP_INFO::WALLS_BLOCK ||
+			(MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPos.Y) == MAP_INFO::WALLS_BLOCK)
+		{
+			NewPos.Y = Position.Y;
+		}
 	}
+
+	// 3x3 범위로 충돌체크
+	// Checking Collide Object is work on SERVER
+
+
+	// for (int j = 0; j < 3; j++)
+	// {
+	// 	for (int i = 0; i < 3; i++)
+	// 	{
+	// 		int X = i + Position.X - 1;
+	// 		int Y = j + Position.Y - 1;
+	// 		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
+	// 
+	// 		MAP_INFO MapInfo = (MAP_INFO)MapMgr::Instance()->GetMapInfo(X, Y);
+	// 		if (MapInfo == MAP_INFO::WALLS_BLOCK)
+	// 		{
+	// 			RECT ActorCollisionBox = { Position.X , Position.Y, Position.X + ImageSpriteWidth, Position.Y + ImageSpriteHeight };
+	// 			RECT TileCollisionBox = { X * BOARDSIZE, Y * BOARDSIZE, (X + 1) * BOARDSIZE, (Y + 1) * BOARDSIZE }
+	// 
+	// 			if (KeyInputInfo & 0b0001 || KeyInputInfo & 0b0010)
+	// 			{
+	// 				NewPos.X = Position.X;
+	// 				std::cout << "Collide!" << std::endl;
+	// 			}
+	// 			if (KeyInputInfo & 0b0100 || KeyInputInfo & 0b1000)
+	// 			{
+	// 				NewPos.Y = Position.Y;
+	// 				std::cout << "Collide!" << std::endl;
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	Position = NewPos;
 }
 
 void Actor::InversionImage(HDC& memdc, RECT dstRect, RECT srcImageRect)
@@ -252,7 +331,7 @@ void Actor::InversionImage(HDC& memdc, RECT dstRect, RECT srcImageRect)
 
 	FillRect(memdc2, &srcImageRect, (HBRUSH)(COLOR_WINDOW + 1));
 
-	Img.StretchBlt(memdc2, { 0,0,ImageSpriteWidth, ImageSpriteHeight }, { srcImageRect.right, srcImageRect.top , srcImageRect.left, srcImageRect.bottom});
+	Img.StretchBlt(memdc2, { 0,0,ImageSpriteWidth, ImageSpriteHeight }, { srcImageRect.right, srcImageRect.top , srcImageRect.left, srcImageRect.bottom });
 	TransparentBlt(memdc, dstRect.left, dstRect.top, dstRect.right - dstRect.left, dstRect.bottom - dstRect.top,
 		memdc2, 0, 0, ImageSpriteWidth, ImageSpriteHeight, 0);
 

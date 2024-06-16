@@ -1,6 +1,6 @@
 #include "GamePlayStatic.h"
 
-#include "GameMgr.h"
+#include "Manager/GameMgr.h"
 #include "Actor.h"
 
 POSITION GamePlayStatic::GetOwnActorPosition()

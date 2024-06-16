@@ -2,14 +2,16 @@
 #pragma comment (lib, "WS2_32.LIB")
 
 #include "GameMgr.h"
-#include "Actor.h"
+#include "../Actor.h"
 
-#include "framework.h"
+#include "../framework.h"
 
-#include "../../Common/protocol.h"
-#include "../../Common/EnumDef.h"
-#include "../../Common/GameUtil.h"
-#include "Define.h"
+#include "../../../Common/protocol.h"
+#include "../../../Common/EnumDef.h"
+#include "../../../Common/GameUtil.h"
+#include "../Define.h"
+
+#include "MapMgr.h"
 
 void CALLBACK recv_callback(DWORD errors, DWORD r_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
 void CALLBACK send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
@@ -21,12 +23,11 @@ GameMgr::GameMgr() :
 {
 	OwnActor = std::make_shared<Actor>();
 
-	WorldImageTile.Load(TEXT("Image/Map/MapImage.png"));
-	LoadBoard();
-
 	PrevTime = std::chrono::system_clock::now();
 
 	RecvOverExp = new OverExpansion;
+
+	MapMgr::Instance()->Init();
 }
 
 GameMgr::~GameMgr()
@@ -109,84 +110,12 @@ void GameMgr::ProcessDownInput(WPARAM wParam)
 	OwnActor->ProcessDownInput(wParam);
 }
 
-void GameMgr::LoadBoard()
-{
-	CImage WorldImage;
-	WorldImage.Load(TEXT("../../Common/Image/MiniWorldMapTile.png"));
-	//WorldImage.Load(TEXT("../../Common/Image/WorldMapTile.png"));
-
-	int Width = WorldImage.GetWidth();
-	int Height = WorldImage.GetHeight();
-
-	for (int i = 0; i < Height; i++)
-	{
-		for (int j = 0; j < Width; j++)
-		{
-			COLORREF PixelColor = WorldImage.GetPixel(i, j);
-			int Red = GetRValue(PixelColor);
-			int Green = GetGValue(PixelColor);
-			int Blue = GetBValue(PixelColor);
-
-			if (Red == 0 && Green == 0 && Blue == 0)
-			{
-				WorldMap[i][j] = (BYTE)MAP_INFO::WALLS_BLOCK;
-			}
-			else if (Red == 255 && Green == 0 && Blue == 0)
-			{
-
-			}
-			else if (Red == 0 && Green == 255 && Blue == 0)
-			{
-				WorldMap[i][j] = (BYTE)MAP_INFO::GROUND_EMPTY;
-			}
-			else if (Red == 0 && Green == 0 && Blue == 255)
-			{
-				WorldMap[i][j] = (BYTE)MAP_INFO::GROUND_EMPTY;
-			}
-		}
-	}
-}
-
 void GameMgr::DrawBoard(HDC& memdc)
 {
 	POSITION pos = OwnActor->GetLocation();
 	//std::cout << X << ", " << Y << std::endl;
 
-	for (int y = 0; y < BOARDSIZE + 2; y++)
-	{
-		for (int x = 0; x < BOARDSIZE + 2; x++)
-		{
-			int DrawX = (int)pos.X + x - BOARDSIZE / 2 - 1;
-			int DrawY = (int)pos.Y + y - BOARDSIZE / 2 - 1;
-
-			if (DrawX < 0 || DrawX >= W_WIDTH || DrawY < 0 || DrawY >= W_WIDTH) continue;
-
-			int BoardDrawSize = WINWIDTH / BOARDSIZE;
-			RECT TileDest{ (x - (pos.X - (int)pos.X) - 1) * BoardDrawSize, (y - (pos.Y - (int)pos.Y) - 1) * BoardDrawSize,
-				(x + 1 - (pos.X - (int)pos.X) - 1) * BoardDrawSize, (y + 1 - (pos.Y - (int)pos.Y) - 1) * BoardDrawSize };
-			switch (WorldMap[DrawY][DrawX])
-			{
-			case (BYTE)MAP_INFO::WALLS_BLOCK:
-			{
-				// 109, 188
-				// 132, 211
-				RECT Tile{ 109,188,132,211 };
-				WorldImageTile.Draw(memdc, TileDest, Tile);
-				break;
-			}
-			case (BYTE)MAP_INFO::GROUND_EMPTY:
-			{
-				// 334, 188
-				// 357, 211
-				RECT Tile{ 334,188,357,211 };
-				WorldImageTile.Draw(memdc, TileDest, Tile);
-				break;
-			}
-			default:
-				break;
-			}
-		}
-	}
+	MapMgr::Instance()->Draw(memdc, pos);
 }
 
 void GameMgr::SendLogin()
@@ -241,19 +170,6 @@ void GameMgr::error_display(const char* msg, int err_no)
 	LocalFree(lpMsgBuf);
 }
 
-//void GameMgr::Recv()
-//{
-//    DWORD recv_byte;
-//    DWORD recv_flag = 0;
-//    char recv_buf[CHAT_SIZE];
-//    WSABUF mybuf_r;
-//    mybuf_r.buf = recv_buf;
-//    mybuf_r.len = CHAT_SIZE;
-//
-//    WSARecv(ServerSocket, &mybuf_r, 1, &recv_byte, &recv_flag, 0, 0);
-//    ProcessRecv(recv_buf);
-//}
-
 void GameMgr::ProcessRecv(PACKET* packet)
 {
 	switch (packet->type)
@@ -290,7 +206,8 @@ void GameMgr::ProcessRecv(PACKET* packet)
 	
 		if (SDMOP->id == SerialNum)
 		{
-			OwnActor->ProcessMove(SDMOP);
+			//OwnActor->ProcessMove(SDMOP);
+			std::cout << "The server adjusted the position" << std::endl;
 		}
 		else
 		{

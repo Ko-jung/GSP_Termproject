@@ -14,6 +14,8 @@ constexpr int W_HEIGHT = 2000;
 constexpr int SECTORSIZE = 8;
 constexpr int VIEW_RANGE = 5;
 
+constexpr int BOARDSIZE = 20;
+
 // Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;

@@ -126,9 +126,6 @@ void Client::Move(POSITION NewPos, char direction)
 	MapMgr* Instance = MapMgr::Instance();
 	bool IsRollBacked = false;
 
-	float NewX = NewPos.X;
-	float NewY = NewPos.Y;
-
 	int PrevSectorXPos = Position.X / SECTORSIZE;
 	int PrevSectorYPos = Position.Y / SECTORSIZE;
 	int CurrSectorXPos = NewPos.X / SECTORSIZE;
@@ -136,22 +133,28 @@ void Client::Move(POSITION NewPos, char direction)
 
 	this->Direction = (ACTOR_DIRECTION)direction;
 
-	if ((Instance->GetMapInfo(NewPos.X + Size * ImageSpriteWidth, NewPos.Y) != (WORD)MAP_INFO::WALLS_BLOCK) ||
-		(Instance->GetMapInfo(NewPos.X, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
-	{
-		Position.X = NewPos.X;
-	}
-	else IsRollBacked = true;
+	float NewPosRight = NewPos.X + (float)ImageSpriteWidth / BOARDSIZE * Size;
+	float NewPosBottom = NewPos.Y + (float)ImageSpriteHeight / BOARDSIZE * Size;
 
-	if ((Instance->GetMapInfo(NewPos.X, NewPos.Y + Size * ImageSpriteHeight) != (WORD)MAP_INFO::WALLS_BLOCK) ||
+	if ((Instance->GetMapInfo(NewPosRight, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK) ||
 		(Instance->GetMapInfo(NewPos.X, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
 	{
-		Position.Y = NewPos.Y;
+		NewPos.X = Position.X;
+		IsRollBacked = true;
 	}
-	else IsRollBacked = true;
+
+	if ((Instance->GetMapInfo(NewPos.X, NewPosBottom) == (WORD)MAP_INFO::WALLS_BLOCK) ||
+		(Instance->GetMapInfo(NewPos.X, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
+	{
+		NewPos.Y = Position.Y;
+		IsRollBacked = true;
+	}
+
+	Position = NewPos;
 
 	// Client Position Reset
-	if(IsRollBacked) SendMovePos(this);
+	if(IsRollBacked)
+		SendMovePos(this);
 
 	if (CurrSectorXPos != PrevSectorXPos || CurrSectorYPos != PrevSectorYPos)
 	{

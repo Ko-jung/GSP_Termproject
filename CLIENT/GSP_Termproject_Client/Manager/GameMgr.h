@@ -5,11 +5,11 @@
 #include <thread>
 #include <unordered_map>
 #include <atlimage.h>
-#include "framework.h"
+#include "../framework.h"
 
-#include "../../Common/protocol.h"
-#include "../../Common/OverExpansion.h"
-#include "Define.h"
+#include "../../../Common/protocol.h"
+#include "../../../Common/OverExpansion.h"
+#include "../Define.h"
 
 class Actor;
 
@@ -40,7 +40,6 @@ public:
 	void ProcessUpInput(WPARAM wParam);
 	void ProcessDownInput(WPARAM wParam);
 
-	void LoadBoard();
 	void DrawBoard(HDC& memdc);
 
 	void SendLogin();
@@ -64,7 +63,6 @@ protected:
 	std::unordered_map<int, std::shared_ptr<Actor>> OtherActors;
 
 	CImage WorldImageTile;
-	std::array<std::array<WORD, 2000>, 2000> WorldMap;
 
 	std::chrono::system_clock::time_point PrevTime;
 
