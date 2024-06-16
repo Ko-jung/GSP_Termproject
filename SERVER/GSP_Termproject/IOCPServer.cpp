@@ -76,6 +76,7 @@ bool IOCPServer::BindListen(const int PortNum)
 
 void IOCPServer::StartServer()
 {
+	ClientMgr::Instance()->InitNPC();
 	for (int i = 0; i < WorkerNum; i++)
 	{
 		WorkerThreads.emplace_back([this]() { Worker(); });

@@ -168,7 +168,14 @@ void GameMgr::ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP)
 
 void GameMgr::ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP)
 {
-	OtherActors.erase(SROP->id);
+	if (SROP->id < MAX_USER)
+	{
+		OtherActors.erase(SROP->id);
+	}
+	else
+	{
+		Monsters.erase(SROP->id);
+	}
 }
 
 void GameMgr::SetOwnActorID(const char* ID)

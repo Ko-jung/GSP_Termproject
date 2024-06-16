@@ -28,12 +28,12 @@ ClientMgr::~ClientMgr()
 void ClientMgr::InitNPC()
 {
 	std::cout << "InitNPC begin.\n";
-	for (int i = MAX_NPC; i < Clients.size(); i++)
+	for (int i = MAX_USER; i < Clients.size(); i++)
 	{
 		Clients[i] = new Client();
 		Clients[i]->ClientNum = i;
 		sprintf_s(Clients[i]->PlayerName, "NPC%d", i);
-		Clients[i]->Position = { (rand() % 2000) / 100 + 100.f, (rand() % 2000) / 100 + 100.f };
+		Clients[i]->Position = { (float)(rand() % 200), (float)(rand() % 200) };
 		Clients[i]->Direction = ACTOR_DIRECTION::DOWN;
 		Clients[i]->State = CLIENT_STATE::INGAME;
 
@@ -121,7 +121,7 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 	int	CurrSectorXPos = c->Position.X / SECTORSIZE;
 	int CurrSectorYPos = c->Position.Y / SECTORSIZE;
 	std::unordered_set<Client*> new_vl;
-	// 0, 0 -> 2, 2 까지 9섹터 검색
+	// 0, 0 -> 2, 2 까지 9섹터 검색 8,9
 	for (int i = 0; i < 9; i++)
 	{
 		int Y = CurrSectorYPos + i / 3 - 1;
@@ -129,6 +129,7 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 
 		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
 
+		SectorMgr* SectorInstance = SectorMgr::Instance();
 		Sector* sector = SectorMgr::Instance()->GetSector(X, Y);
 		sector->SectorLock.lock();
 		for (auto& cl : sector->SectorClient)
