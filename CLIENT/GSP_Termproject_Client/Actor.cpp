@@ -16,11 +16,11 @@ Actor::Actor(bool IsPossess) :
 	Speed(5.f),
 	State(ACTOR_STATE::WALK),
 	Direction(ACTOR_DIRECTION::LEFT),
-	//KeyInputInfo(0),
+	KeyInputInfo(0),
 	Frame(0.f),
-	Size(1.f),
-	ForceX(0),
-	ForceY(0)
+	Size(1.f)
+	//ForceX(0),
+	//ForceY(0)
 {
 	if (Img.IsNull())
 		Img.Load(TEXT("Image/Player/Actor.png"));
@@ -60,7 +60,7 @@ void Actor::Draw(HDC& memdc)
 		int DstPosX = (Position.X - OwnActorPos.X) * BoardWidthSize;
 		int DstPosY = (Position.Y - OwnActorPos.Y) * BoardHeightSize;
 
-		ImageDst = { WINWIDTH / 2 + DstPosX, WINHEIGHT / 2 - (BoardHeightSize) +DstPosY,
+		ImageDst = { WINWIDTH / 2 + DstPosX, WINHEIGHT / 2 - (BoardHeightSize)+DstPosY,
 			BoardWidthSize + WINWIDTH / 2 + DstPosX, BoardHeightSize + WINHEIGHT / 2 + DstPosY };
 	}
 
@@ -229,9 +229,28 @@ void Actor::Move(float elapsedTime)
 	//float NewPosRight = NewPos.X + (float)ImageSpriteWidth / BOARDSIZE * Size;
 	//float NewPosBottom = NewPos.Y + (float)ImageSpriteHeight/ BOARDSIZE * Size;
 
+
+	int ForceX = 0;
+	int ForceY = 0;
+	if (KeyInputInfo & 0b0001)
+	{
+		ForceX++;
+	}
+	if (KeyInputInfo & 0b0010)
+	{
+		ForceX--;
+	}
+	if (KeyInputInfo & 0b0100)
+	{
+		ForceY++;
+	}
+	if (KeyInputInfo & 0b1000)
+	{
+		ForceY--;
+	}
+
 	// Checking RIGHT
 	if (ForceX > 0)
-	//if (KeyInputInfo & 0b0001)
 	{
 		Direction = ACTOR_DIRECTION::RIGHT;
 
@@ -240,7 +259,7 @@ void Actor::Move(float elapsedTime)
 
 		float NewPosRight = NewPos.X + (float)1 * Size;
 		float NewPosBottom = NewPos.Y + (float)1 * Size;
-		if ((MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPos.Y)== MAP_INFO::WALLS_BLOCK || 
+		if ((MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPos.Y) == MAP_INFO::WALLS_BLOCK ||
 			(MAP_INFO)MapInstance->GetMapInfo(NewPosRight, NewPosBottom) == MAP_INFO::WALLS_BLOCK)
 		{
 			NewPos.X = Position.X;
@@ -249,7 +268,6 @@ void Actor::Move(float elapsedTime)
 
 	// Checking LEFT
 	else if (ForceX < 0)
-	//if (KeyInputInfo & 0b0010)
 	{
 		Direction = ACTOR_DIRECTION::LEFT;
 
@@ -267,7 +285,6 @@ void Actor::Move(float elapsedTime)
 
 	// Checking DOWN
 	if (ForceY > 0)
-	//if (KeyInputInfo & 0b0100)
 	{
 		Direction = ACTOR_DIRECTION::DOWN;
 
@@ -288,7 +305,6 @@ void Actor::Move(float elapsedTime)
 
 	// Checking UP
 	else if (ForceY < 0)
-	//if (KeyInputInfo & 0b1000)
 	{
 		Direction = ACTOR_DIRECTION::UP;
 
@@ -379,28 +395,28 @@ void Actor::ProcessDownInput(WPARAM wParam)
 	case 'W':
 	case VK_UP:
 	{
-		KeyInputInfo =  KeyInputInfo | 0b1000;
+		KeyInputInfo = KeyInputInfo | 0b1000;
 		break;
 	}
 	case 'a':
 	case 'A':
 	case VK_LEFT:
 	{
-		KeyInputInfo =  KeyInputInfo | 0b0010;
+		KeyInputInfo = KeyInputInfo | 0b0010;
 		break;
 	}
 	case 's':
 	case 'S':
 	case VK_DOWN:
 	{
-		KeyInputInfo =  KeyInputInfo | 0b0100;
+		KeyInputInfo = KeyInputInfo | 0b0100;
 		break;
 	}
 	case 'd':
 	case 'D':
 	case VK_RIGHT:
 	{
-		KeyInputInfo =  KeyInputInfo | 0b0001;
+		KeyInputInfo = KeyInputInfo | 0b0001;
 		break;
 	}
 	default:

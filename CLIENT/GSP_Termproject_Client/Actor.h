@@ -56,8 +56,6 @@ protected:
 	float Frame;
 
 	char KeyInputInfo;
-	int ForceX;
-	int ForceY;
 
 	// No Use NOW
 	float Size;
