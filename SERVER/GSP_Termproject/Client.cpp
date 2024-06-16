@@ -26,6 +26,25 @@ Client::~Client()
 {
 }
 
+void Client::Init()
+{
+	ClientNum = -1;
+	closesocket(Socket);
+	RemainDataLen = 0;
+	PlayerName[0] = '\0';
+	Position = {0.f, 0.f};
+	Speed = 0;
+	Size = 0;
+	LastMoveTime = 0;
+
+	Direction = ACTOR_DIRECTION::DOWN;
+	ViewListLock;
+	ViewList;
+
+	std::lock_guard<std::mutex> ll(StateMutex);
+	State = CLIENT_STATE::FREE;
+}
+
 void Client::Send(PACKET* p)
 {
 	if (Socket == INVALID_SOCKET)
@@ -51,7 +70,7 @@ void Client::Recv()
 {
 	DWORD recv_flag = 0;
 
-	ZeroMemory(&Exp, sizeof(Exp));
+	ZeroMemory(&Exp._over, sizeof(Exp._over));
 	Exp._wsabuf.buf = reinterpret_cast<char*>(Exp._send_buf + RemainDataLen);
 	Exp._wsabuf.len = sizeof(Exp._send_buf) - RemainDataLen;
 
@@ -102,78 +121,42 @@ void Client::StressTestMove(char Direction)
 	SendStressTestMovePos();
 }
 
-void Client::Move(char BitDirection, char Direction)
+void Client::Move(POSITION NewPos, char direction)
 {
 	MapMgr* Instance = MapMgr::Instance();
 	bool IsRollBacked = false;
 
+	float NewX = NewPos.X;
+	float NewY = NewPos.Y;
 
-	float X = Position.X;
-	float Y = Position.Y;
 	int PrevSectorXPos = Position.X / SECTORSIZE;
 	int PrevSectorYPos = Position.Y / SECTORSIZE;
+	int CurrSectorXPos = NewPos.X / SECTORSIZE;
+	int CurrSectorYPos = NewPos.Y / SECTORSIZE;
 
-	{	// Checking Move
-		// Checking RIGHT
-		if (BitDirection & 0b0001)
-		{
-			if (X < W_WIDTH - 1)
-				X += Speed;
+	this->Direction = (ACTOR_DIRECTION)direction;
 
-			if (Instance->GetMapInfo(X + Size * ImageSpriteWidth, Y) == (WORD)MAP_INFO::WALLS_BLOCK)
-			{
-				X -= Speed;
-				IsRollBacked = true;
-			}
-		}
-		// Checking LEFT
-		if (BitDirection & 0b0010)
-		{
-			if (X > 0)
-				X -= Speed;
-
-			if (Instance->GetMapInfo(X, Y) == (WORD)MAP_INFO::WALLS_BLOCK)
-			{
-				X += Speed;
-				IsRollBacked = true;
-			}
-		}
-		// Checking DOWN
-		if (BitDirection & 0b0100)
-		{
-			if (Y < W_HEIGHT - 1)
-				Y += Speed;
-
-			if (Instance->GetMapInfo(X , Y + Size * ImageSpriteHeight) == (WORD)MAP_INFO::WALLS_BLOCK)
-			{
-				Y -= Speed;
-				IsRollBacked = true;
-			}
-		}
-		// Checking UP
-		if (BitDirection & 0b1000)
-		{
-			if (Y > 0)
-				Y -= Speed;
-
-			if (Instance->GetMapInfo(X, Y) == (WORD)MAP_INFO::WALLS_BLOCK)
-			{
-				Y += Speed;
-				IsRollBacked = true;
-			}
-		}
+	if ((Instance->GetMapInfo(NewPos.X + Size * ImageSpriteWidth, NewPos.Y) != (WORD)MAP_INFO::WALLS_BLOCK) ||
+		(Instance->GetMapInfo(NewPos.X, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
+	{
+		Position.X = NewPos.X;
 	}
-	this->Direction = (ACTOR_DIRECTION)Direction;
+	else IsRollBacked = true;
 
-	int CurrSectorXPos = Position.X / SECTORSIZE;
-	int CurrSectorYPos = Position.Y / SECTORSIZE;
+	if ((Instance->GetMapInfo(NewPos.X, NewPos.Y + Size * ImageSpriteHeight) != (WORD)MAP_INFO::WALLS_BLOCK) ||
+		(Instance->GetMapInfo(NewPos.X, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
+	{
+		Position.Y = NewPos.Y;
+	}
+	else IsRollBacked = true;
+
+	// Client Position Reset
+	if(IsRollBacked) SendMovePos(this);
 
 	if (CurrSectorXPos != PrevSectorXPos || CurrSectorYPos != PrevSectorYPos)
 	{
 		SectorMgr::Instance()->MoveSector(this, PrevSectorXPos, PrevSectorYPos);
 	}
-
-	SendMovePos();
 }
 
 RECT Client::GetCollisionBox()
@@ -210,13 +193,47 @@ void Client::SendStressTestMovePos()
 	Send(&SMOP);
 }
 
-void Client::SendMovePos()
-{
+void Client::SendMovePos(Client* c)
+{	
+	// Send Self Pos or Other Pos
 	SC_8DIRECT_MOVE_OBJECT_PACKET SDMOP;
-	SDMOP.id = ClientNum;
-	SDMOP.x = Position.X;
-	SDMOP.y = Position.Y;
-	SDMOP.direction = (char)Direction;
-	SDMOP.move_time = LastMoveTime;
+	SDMOP.id = c->ClientNum;
+	SDMOP.x = c->Position.X;
+	SDMOP.y = c->Position.Y;
+	SDMOP.direction = (char)c->Direction;
+	SDMOP.move_time = c->LastMoveTime;
 	Send(&SDMOP);
+}
+
+void Client::SendAddPlayer(Client* c)
+{
+	SC_ADD_OBJECT_PACKET SAOP;
+	SAOP.id = c->ClientNum;
+	strcpy_s(SAOP.name, c->PlayerName);
+	SAOP.size = sizeof(SAOP);
+	SAOP.type = SC_ADD_OBJECT;
+	SAOP.x = c->Position.X;
+	SAOP.y = c->Position.Y;
+
+	ViewListLock.lock();
+	ViewList.insert(c);
+	ViewListLock.unlock();
+
+	Send(&SAOP);
+}
+
+void Client::SendRemovePlayer(Client* c)
+{
+	ViewListLock.lock();
+	if (ViewList.count(c))
+		ViewList.erase(c);
+	else {
+		ViewListLock.unlock();
+		return;
+	}
+	ViewListLock.unlock();
+
+	SC_REMOVE_OBJECT_PACKET SROP;
+	SROP.id = c->ClientNum;
+	Send(&SROP);
 }

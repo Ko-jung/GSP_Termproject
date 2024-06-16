@@ -12,18 +12,21 @@ public:
 	Client();
 	~Client();
 
+	void Init();
 	void Send(struct PACKET* p);
 	void Recv();
 	void RecvProcess(int byte, OverExpansion* exp);
 
 	void StressTestMove(char Direction);
-	void Move(char bitDirection, char Direction);
+	void Move(POSITION NewPos, char direction);
 
 	RECT GetCollisionBox();
 
 	void SendLoginInfo();
 	void SendStressTestMovePos();
-	void SendMovePos();
+	void SendMovePos(Client* c);
+	void SendAddPlayer(Client* c);
+	void SendRemovePlayer(Client* c);
 
 	int ClientNum;
 	SOCKET Socket;
@@ -40,6 +43,8 @@ public:
 
 	std::mutex StateMutex;
 	int LastMoveTime;
+	std::mutex	ViewListLock;
+	std::unordered_set<Client*> ViewList;
 
 	static int ImageSpriteWidth;
 	static int ImageSpriteHeight;

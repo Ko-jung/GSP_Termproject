@@ -24,6 +24,8 @@ public:
 	void Remove(Client* Target);
 	void MoveSector(Client* Target, int TargetPrevX, int TargetPrevY);
 
+	Sector* GetSector(int x, int y) { return &Sectors[y][x]; }
+
 private:
 	std::array<std::array<Sector, W_WIDTH / SECTORSIZE + 1>, W_HEIGHT / SECTORSIZE + 1> Sectors;
 

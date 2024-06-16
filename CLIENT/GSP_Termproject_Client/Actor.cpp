@@ -42,9 +42,21 @@ void Actor::Draw(HDC& memdc)
 	int BoardHeightSize = WINHEIGHT / BOARDSIZE;
 
 	float ImageRatio = (float)ImageSpriteHeight / ImageSpriteWidth;
+	RECT ImageDst;
+	if (IsPossessed)
+	{
+		ImageDst = { WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - (BoardHeightSize * 3),
+			BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
+	}
+	else
+	{
+		POSITION OwnActorPos = GamePlayStatic::GetOwnActorPosition();
+		int DstPosX = (Position.X - OwnActorPos.X) * BoardWidthSize;
+		int DstPosY = (Position.Y - OwnActorPos.Y) * BoardHeightSize;
 
-	RECT ImageDst{ WINWIDTH / 2 - BoardWidthSize, WINHEIGHT / 2 - (BoardHeightSize * 3),
-		BoardWidthSize + WINWIDTH / 2, BoardHeightSize + WINHEIGHT / 2 };
+		ImageDst = { WINWIDTH / 2 - BoardWidthSize + DstPosX, WINHEIGHT / 2 - (BoardHeightSize * 3) + DstPosY,
+			BoardWidthSize + WINWIDTH / 2 + DstPosX, BoardHeightSize + WINHEIGHT / 2 + DstPosY };
+	}
 
 	{	// Draw Body
 
@@ -76,6 +88,18 @@ void Actor::Draw(HDC& memdc)
 			InversionImage(memdc, ImageDst, ImageSrc);
 		}
 	}
+}
+
+void Actor::InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP)
+{
+	Position.X = SAOP->x;
+	Position.Y = SAOP->y;
+
+	Name = SAOP->name;
+
+	// Processing Visual
+
+	// =================
 }
 
 void Actor::LoadSprite()

@@ -43,7 +43,10 @@ public:
 	void LoadBoard();
 	void DrawBoard(HDC& memdc);
 
+	void SendLogin();
 	void SendPosition();
+
+	void ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP);
 
 	SOCKET& GetSocket() { return ServerSocket; }
 	Actor* GetOwnActor() { return OwnActor.get(); }
@@ -67,5 +70,6 @@ protected:
 	// For Network
 	SOCKET ServerSocket;
 	int RemainDataLen;
+	OverExpansion* RecvOverExp;
 };
 

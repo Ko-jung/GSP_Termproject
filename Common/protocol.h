@@ -1,4 +1,6 @@
 #pragma once
+#include "GameUtil.h"
+
 constexpr int PORT_NUM = 4000;
 constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 300;
@@ -10,6 +12,7 @@ constexpr int W_WIDTH = 2000;
 constexpr int W_HEIGHT = 2000;
 
 constexpr int SECTORSIZE = 8;
+constexpr int VIEW_RANGE = 5;
 
 // Packet ID
 constexpr char CS_LOGIN = 0;
@@ -54,17 +57,9 @@ struct CS_MOVE_PACKET : PACKET {
 };
 
 struct CS_8DIRECT_MOVE_PACKET : PACKET {
-	/// <summary>
-	/// 비트연산으로 현재 입력된 값을 파악
-	/// 7654 : 사용 X,
-	/// 3 : UP,
-	/// 2 : DOWN,
-	/// 1 : LEFT,
-	/// 0 : RIGHT
-	/// </summary>
-	char		bitDirection;
-	char		direction;		// See Direction
-	unsigned	move_time;
+	POSITION		Position;
+	char			direction;		// See Direction
+	unsigned int	move_time;
 
 	CS_8DIRECT_MOVE_PACKET() : PACKET(CS_8DIRECT_MOVE) { size = sizeof(CS_8DIRECT_MOVE_PACKET); }
 };

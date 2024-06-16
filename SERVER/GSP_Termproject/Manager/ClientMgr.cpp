@@ -4,6 +4,7 @@
 #include "../../../Common/OverExpansion.h"
 
 #include "MapMgr.h"
+#include "SectorMgr.h"
 
 #include <atomic>
 
@@ -31,9 +32,7 @@ void ClientMgr::RecvProcess(int id, int bytes, OverExpansion* exp)
 
 void ClientMgr::Disconnect(int id)
 {
-	closesocket(Clients[id]->Socket);
-	std::lock_guard<std::mutex> ll(Clients[id]->StateMutex);
-	Clients[id]->State = CLIENT_STATE::FREE;
+	Clients[id]->Init();
 }
 
 Client* ClientMgr::GetEmptyClient(int& ClientNum)
@@ -100,28 +99,128 @@ void ClientMgr::MapCollisionCheck(int id)
 	}
 }
 
+void ClientMgr::SendPosToOtherClientUseSector(Client* c)
+{
+	int	CurrSectorXPos = c->Position.X / SECTORSIZE;
+	int CurrSectorYPos = c->Position.Y / SECTORSIZE;
+	std::unordered_set<Client*> new_vl;
+	// 0, 0 -> 2, 2 까지 9섹터 검색
+	for (int i = 0; i < 9; i++)
+	{
+		int Y = CurrSectorYPos + i / 3 - 1;
+		int X = CurrSectorXPos + i % 3 - 1;
+
+		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
+
+		Sector* sector = SectorMgr::Instance()->GetSector(X, Y);
+		sector->SectorLock.lock();
+		for (auto& cl : sector->SectorClient)
+		{
+			if (cl->State != CLIENT_STATE::INGAME) continue;
+			if (cl->ClientNum == c->ClientNum) continue;
+			if (CanSee(cl, c))
+			{
+				new_vl.insert(cl);
+			}
+		}
+		sector->SectorLock.unlock();
+	}
+
+	c->ViewListLock.lock();
+	std::unordered_set<Client*> OldTargetViewList = c->ViewList;
+	c->ViewListLock.unlock();
+
+	//c->send_move_packet(c_id);
+
+	for (auto& pClient : new_vl) {
+		//if (is_pc(pl)) {
+			pClient->ViewListLock.lock();
+			if (pClient->ViewList.count(c)) {
+				pClient->ViewListLock.unlock();
+				pClient->SendMovePos(c);
+			}
+			else {
+				pClient->ViewListLock.unlock();
+				pClient->SendAddPlayer(c);
+			}
+		//}
+		//else WakeUpNPC(pl, c_id);
+
+		if (OldTargetViewList.count(pClient) == 0)
+			c->SendAddPlayer(pClient);
+	}
+
+	for (auto& pClient : OldTargetViewList)
+		if (0 == new_vl.count(pClient)) {
+			c->SendRemovePlayer(pClient);
+			//if (is_pc(pl))
+				pClient->SendRemovePlayer(c);
+		}
+}
+
+void ClientMgr::SendAppPlayerUseSector(Client* c)
+{
+	int	CurrSectorXPos = c->Position.X / SECTORSIZE;
+	int CurrSectorYPos = c->Position.Y / SECTORSIZE;
+	for (int i = 0; i < 9; i++)
+	{
+		int Y = CurrSectorYPos + i / 3 - 1;
+		int X = CurrSectorXPos + i % 3 - 1;
+
+		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
+
+		Sector* sector = SectorMgr::Instance()->GetSector(X, Y);
+		sector->SectorLock.lock();
+		for (auto& pClient : sector->SectorClient)
+		{
+			{
+				std::lock_guard<std::mutex> ll(pClient->StateMutex);
+				if (CLIENT_STATE::INGAME != pClient->State) continue;
+			}
+			if (pClient->ClientNum == c->ClientNum) continue;
+			if (false == CanSee(c, pClient))
+				continue;
+			//if (is_pc(pClient->ClientNum))
+				pClient->SendAddPlayer(c);
+			//else WakeUpNPC(pClient->ClientNum, c->ClientNum);
+			c->SendAddPlayer(pClient);
+		}
+		sector->SectorLock.unlock();
+	}
+}
+
+bool ClientMgr::CanSee(const Client* c1, const Client* c2)
+{
+	if (abs(c1->Position.X - c2->Position.X) > VIEW_RANGE) return false;
+	return abs(c1->Position.Y - c2->Position.Y) <= VIEW_RANGE;
+}
+
 void ClientMgr::ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c)
 {
 	strcpy_s(c->PlayerName, CLP->name);
 	{
 		std::lock_guard<std::mutex> ll{ c->StateMutex };
-		c->Position.X = rand() % W_WIDTH;
-		c->Position.Y = rand() % W_HEIGHT;
+		c->Position.X = 100.f;//rand() % W_WIDTH;
+		c->Position.Y = 100.f;//rand() % W_HEIGHT;
 		c->State = CLIENT_STATE::INGAME;
 	}
 	c->SendLoginInfo();
 
 	// ADD SECTOR
-
+	SectorMgr::Instance()->Insert(c);
 	// ==========
+
+	SendAppPlayerUseSector(c);
 }
 
 void ClientMgr::ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c)
 {
 	c->StressTestMove(CMP->direction);
+	SendPosToOtherClientUseSector(c);
 }
 
 void ClientMgr::ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c)
 {
-	c->Move(CMP->bitDirection, CMP->direction);
+	c->Move(CMP->Position, CMP->direction);
+	SendPosToOtherClientUseSector(c);
 }

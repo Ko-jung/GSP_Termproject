@@ -16,6 +16,7 @@ public:
 	Actor(bool IsPossess = true);
 	virtual ~Actor() {}
 
+	void InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP);
 	void Update(float elapsedTime);
 	void Draw(HDC& memdc);
 	void LoadSprite();
@@ -33,6 +34,7 @@ public:
 	POSITION GetLocation() { return Position; }
 	ACTOR_DIRECTION GetDirection() { return Direction; }
 	char GetKeyInputInfo() { return KeyInputInfo; }
+	const char* GetPlayerName() { return Name.c_str(); }
 
 	void ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP);
 	void ProcessMove(SC_MOVE_OBJECT_PACKET* SLIP);

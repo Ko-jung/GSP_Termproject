@@ -25,6 +25,10 @@ public:
 
 	void MapCollisionCheck(int id);
 
+	void SendPosToOtherClientUseSector(Client* c);
+	void SendAppPlayerUseSector(Client* c);
+	bool CanSee(const Client* c1, const Client* c2);
+
 	// From Process Packet
 	void ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c);
 	void ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c);

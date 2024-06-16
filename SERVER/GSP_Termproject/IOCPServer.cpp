@@ -8,6 +8,8 @@
 
 #include "Manager/ClientMgr.h"
 #include "Manager/MapMgr.h"
+#include "Manager/SectorMgr.h"
+
 #include "Client.h"
 
 IOCPServer::IOCPServer()
@@ -74,9 +76,6 @@ bool IOCPServer::BindListen(const int PortNum)
 
 void IOCPServer::StartServer()
 {
-	int a;
-	ClientMgr::Instance()->GetEmptyClient(a);
-
 	for (int i = 0; i < WorkerNum; i++)
 	{
 		WorkerThreads.emplace_back([this]() { Worker(); });
@@ -161,15 +160,14 @@ void IOCPServer::ProcessAccept(OverExpansion* exp)
 	if (ClientMgr::Instance()->GetClientCount() < MAX_USER)
 	{
 		int NowClientNum;
-		Client* socket = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+		Client* NewClient = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
 
-		socket->ClientNum = NowClientNum;
-		socket->Socket = (*(reinterpret_cast<SOCKET*>(exp->_send_buf)));
+		NewClient->ClientNum = NowClientNum;
+		NewClient->Socket = (*(reinterpret_cast<SOCKET*>(exp->_send_buf)));
 
-		CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket->Socket), hIocp, NowClientNum, 0);
-	 
-		socket->SendLoginInfo();
-	 	socket->Recv();
+		CreateIoCompletionPort(reinterpret_cast<HANDLE>(NewClient->Socket), hIocp, NowClientNum, 0);
+
+	 	NewClient->Recv();
 
 		ReadyAccept();
 	}

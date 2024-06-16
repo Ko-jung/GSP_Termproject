@@ -25,6 +25,8 @@ GameMgr::GameMgr() :
 	LoadBoard();
 
 	PrevTime = std::chrono::system_clock::now();
+
+	RecvOverExp = new OverExpansion;
 }
 
 GameMgr::~GameMgr()
@@ -61,6 +63,7 @@ bool GameMgr::Connect(const char* ip)
 	}
 
 	//NetworkThread = std::thread(&GameMgr::Recv, this);
+	SendLogin();
 	Recv();
 
 	return true;
@@ -181,16 +184,30 @@ void GameMgr::DrawBoard(HDC& memdc)
 	}
 }
 
+void GameMgr::SendLogin()
+{
+	CS_LOGIN_PACKET CLP;
+	strcpy_s(CLP.name, OwnActor->GetPlayerName());
+	Send(&CLP);
+}
+
 void GameMgr::SendPosition()
 {
 	// POSITION Pos = OwnActor->GetLocation();
 
-
 	CS_8DIRECT_MOVE_PACKET CMP;
-	CMP.bitDirection = OwnActor->GetKeyInputInfo();
+	CMP.Position = OwnActor->GetLocation();
 	CMP.direction = (char)OwnActor->GetDirection();
 
 	Send(&CMP);
+}
+
+void GameMgr::ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP)
+{
+	std::shared_ptr<Actor> NewActor = std::make_shared<Actor>(false);
+	NewActor->InitUsePacket(SAOP);
+
+	OtherActors.insert(std::make_pair(SAOP->id, NewActor));
 }
 
 void GameMgr::SetOwnActorID(const char* ID)
@@ -241,8 +258,11 @@ void GameMgr::ProcessRecv(PACKET* packet)
 	}
 	case SC_LOGIN_FAIL:
 		break;
-	//case SC_ADD_OBJECT:
-	//	break;
+	case SC_ADD_OBJECT:
+	{
+		ProcessAddObject(reinterpret_cast<SC_ADD_OBJECT_PACKET*>(packet));
+		break;
+	}
 	case SC_REMOVE_OBJECT:
 		break;
 	case SC_MOVE_OBJECT:
@@ -293,12 +313,11 @@ void GameMgr::Recv()
 {
 	DWORD RecvFlag = 0;
 
-	OverExpansion* Exp = new OverExpansion;
-	ZeroMemory(&Exp->_over, sizeof(Exp->_over));
-	Exp->_wsabuf.buf = reinterpret_cast<char*>(Exp->_send_buf + RemainDataLen);
-	Exp->_wsabuf.len = sizeof(Exp->_send_buf) - RemainDataLen;
+	ZeroMemory(&RecvOverExp->_over, sizeof(RecvOverExp->_over));
+	RecvOverExp->_wsabuf.buf = reinterpret_cast<char*>(RecvOverExp->_send_buf + RemainDataLen);
+	RecvOverExp->_wsabuf.len = sizeof(RecvOverExp->_send_buf) - RemainDataLen;
 
-	int ret = WSARecv(ServerSocket, &Exp->_wsabuf, 1, nullptr, &RecvFlag, &Exp->_over, ::recv_callback);
+	int ret = WSARecv(ServerSocket, &RecvOverExp->_wsabuf, 1, nullptr, &RecvFlag, &RecvOverExp->_over, ::recv_callback);
 	if (ret != 0)
 	{
 		if(WSAGetLastError() != WSA_IO_PENDING)

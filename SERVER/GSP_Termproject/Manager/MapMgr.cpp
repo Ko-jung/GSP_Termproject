@@ -5,6 +5,8 @@
 
 void MapMgr::Init()
 {
+	std::cout << "World Loading ... " << std::endl;
+
 	CImage MapImage;
 	MapImage.Load(TEXT("../../Common/Image/MiniWorldMapTile.png"));
 
@@ -44,4 +46,6 @@ void MapMgr::Init()
 			}
 		}
 	}
+
+	std::cout << "World Loading Complete" << std::endl;
 }
