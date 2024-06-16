@@ -21,6 +21,7 @@ public:
 	SINGLETON(SectorMgr);
 
 	void Insert(Client* Target);
+	void UnsafeInsert(Client* Target);
 	void Remove(Client* Target);
 	void MoveSector(Client* Target, int TargetPrevX, int TargetPrevY);
 

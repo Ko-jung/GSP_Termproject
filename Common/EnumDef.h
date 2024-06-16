@@ -47,3 +47,10 @@ enum class ACTOR_DIRECTION : BYTE
 	UP,
 	LEFT,
 };
+
+enum class MONSTER_STATE : BYTE
+{
+	IDLE,
+	DIE,
+	END,
+};

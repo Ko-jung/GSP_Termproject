@@ -8,3 +8,9 @@ POSITION GamePlayStatic::GetOwnActorPosition()
 	GameMgr* inst = GameMgr::Instance();
 	return inst->GetOwnActor()->GetLocation();
 }
+
+float GamePlayStatic::GetFPS()
+{
+	GameMgr* inst = GameMgr::Instance();
+	return inst->GetFPS();
+}

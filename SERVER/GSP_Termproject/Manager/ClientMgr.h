@@ -17,6 +17,7 @@ public:
 	ClientMgr();
 	~ClientMgr();
 
+	void InitNPC();
 	void RecvProcess(int id, int bytes, class OverExpansion* exp);
 	void Disconnect(int id);
 
@@ -27,7 +28,9 @@ public:
 
 	void SendPosToOtherClientUseSector(Client* c);
 	void SendAddPlayerUseSector(Client* c);
+	
 	bool CanSee(const Client* c1, const Client* c2);
+	bool IsNPC(const Client* Target);
 
 	// From Process Packet
 	void ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c);
@@ -35,7 +38,7 @@ public:
 	void ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c);
 
 private:
-	std::array<Client*, MAX_USER> Clients;
+	std::array<Client*, MAX_USER + MAX_NPC> Clients;
 	std::atomic<int> ClientCount;
 };
 

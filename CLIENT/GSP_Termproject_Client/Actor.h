@@ -24,6 +24,8 @@ public:
 	RECT GetRectDstWithPos();
 	void Move(float elapsedTime);
 	void InversionImage(HDC& memdc,RECT dstRect, RECT srcRect);
+	void ChangeState(ACTOR_STATE state);
+
 	void ProcessUpInput(WPARAM wParam);
 	void ProcessDownInput(WPARAM wParam);
 	
@@ -33,7 +35,7 @@ public:
 
 	POSITION GetLocation() { return Position; }
 	ACTOR_DIRECTION GetDirection() { return Direction; }
-	char GetKeyInputInfo() { return KeyInputInfo; }
+	//char GetKeyInputInfo() { return KeyInputInfo; }
 	const char* GetPlayerName() { return Name.c_str(); }
 
 	void ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP);
@@ -51,8 +53,11 @@ protected:
 	int	Level;
 	ACTOR_STATE State;
 	ACTOR_DIRECTION Direction;
-	char KeyInputInfo;
 	float Frame;
+
+	char KeyInputInfo;
+	int ForceX;
+	int ForceY;
 
 	// No Use NOW
 	float Size;

@@ -12,6 +12,9 @@
 int Client::ImageSpriteWidth;
 int Client::ImageSpriteHeight;
 
+int Client::MonsterImageSpriteWidth;
+int Client::MonsterImageSpriteHeight;
+
 Client::Client() :
 	ClientNum(-1),
 	RemainDataLen(0),
@@ -20,6 +23,9 @@ Client::Client() :
 {
 	ImageSpriteWidth = 16;
 	ImageSpriteHeight = 33;
+
+	MonsterImageSpriteWidth = 18;
+	MonsterImageSpriteHeight = 17;
 }
 
 Client::~Client()

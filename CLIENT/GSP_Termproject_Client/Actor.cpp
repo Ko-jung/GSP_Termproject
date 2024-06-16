@@ -16,9 +16,11 @@ Actor::Actor(bool IsPossess) :
 	Speed(5.f),
 	State(ACTOR_STATE::WALK),
 	Direction(ACTOR_DIRECTION::LEFT),
-	KeyInputInfo(0),
+	//KeyInputInfo(0),
 	Frame(0.f),
-	Size(1.f)
+	Size(1.f),
+	ForceX(0),
+	ForceY(0)
 {
 	if (Img.IsNull())
 		Img.Load(TEXT("Image/Player/Actor.png"));
@@ -32,7 +34,7 @@ Actor::Actor(bool IsPossess) :
 void Actor::Update(float elapsedTime)
 {
 	Frame += elapsedTime;
-	if (Frame > Sprites[(int)State][(int)Direction].size())
+	if (Frame > Sprites[(int)State][(int)Direction].size() - FLT_MIN)
 		Frame = 0.f;
 
 	Move(elapsedTime);
@@ -98,6 +100,8 @@ void Actor::InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP)
 {
 	Position.X = SAOP->x;
 	Position.Y = SAOP->y;
+	MaxHp = SAOP->max_hp;
+	CurrentHp = SAOP->hp;
 
 	Name = SAOP->name;
 
@@ -226,8 +230,11 @@ void Actor::Move(float elapsedTime)
 	//float NewPosBottom = NewPos.Y + (float)ImageSpriteHeight/ BOARDSIZE * Size;
 
 	// Checking RIGHT
-	if (KeyInputInfo & 0b0001)
+	if (ForceX > 0)
+	//if (KeyInputInfo & 0b0001)
 	{
+		Direction = ACTOR_DIRECTION::RIGHT;
+
 		if (NewPos.X < W_WIDTH - 1)
 			NewPos.X += Speed * elapsedTime;
 
@@ -241,8 +248,11 @@ void Actor::Move(float elapsedTime)
 	}
 
 	// Checking LEFT
-	if (KeyInputInfo & 0b0010)
+	else if (ForceX < 0)
+	//if (KeyInputInfo & 0b0010)
 	{
+		Direction = ACTOR_DIRECTION::LEFT;
+
 		if (NewPos.X > 0)
 			NewPos.X -= Speed * elapsedTime;
 
@@ -256,8 +266,11 @@ void Actor::Move(float elapsedTime)
 	}
 
 	// Checking DOWN
-	if (KeyInputInfo & 0b0100)
+	if (ForceY > 0)
+	//if (KeyInputInfo & 0b0100)
 	{
+		Direction = ACTOR_DIRECTION::DOWN;
+
 		if (NewPos.Y < W_HEIGHT - 1)
 			NewPos.Y += Speed * elapsedTime;
 
@@ -274,8 +287,11 @@ void Actor::Move(float elapsedTime)
 	}
 
 	// Checking UP
-	if (KeyInputInfo & 0b1000)
+	else if (ForceY < 0)
+	//if (KeyInputInfo & 0b1000)
 	{
+		Direction = ACTOR_DIRECTION::UP;
+
 		if (NewPos.Y > 0)
 			NewPos.Y -= Speed * elapsedTime;
 
@@ -288,39 +304,10 @@ void Actor::Move(float elapsedTime)
 		}
 	}
 
-	// 3x3 범위로 충돌체크
-	// Checking Collide Object is work on SERVER
-
-
-	// for (int j = 0; j < 3; j++)
-	// {
-	// 	for (int i = 0; i < 3; i++)
-	// 	{
-	// 		int X = i + Position.X - 1;
-	// 		int Y = j + Position.Y - 1;
-	// 		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
-	// 
-	// 		MAP_INFO MapInfo = (MAP_INFO)MapMgr::Instance()->GetMapInfo(X, Y);
-	// 		if (MapInfo == MAP_INFO::WALLS_BLOCK)
-	// 		{
-	// 			RECT ActorCollisionBox = { Position.X , Position.Y, Position.X + ImageSpriteWidth, Position.Y + ImageSpriteHeight };
-	// 			RECT TileCollisionBox = { X * BOARDSIZE, Y * BOARDSIZE, (X + 1) * BOARDSIZE, (Y + 1) * BOARDSIZE }
-	// 
-	// 			if (KeyInputInfo & 0b0001 || KeyInputInfo & 0b0010)
-	// 			{
-	// 				NewPos.X = Position.X;
-	// 				std::cout << "Collide!" << std::endl;
-	// 			}
-	// 			if (KeyInputInfo & 0b0100 || KeyInputInfo & 0b1000)
-	// 			{
-	// 				NewPos.Y = Position.Y;
-	// 				std::cout << "Collide!" << std::endl;
-	// 			}
-	// 		}
-	// 	}
-	// }
-
 	Position = NewPos;
+
+	if (ForceX == 0 && ForceY == 0) ChangeState(ACTOR_STATE::IDLE);
+	else							ChangeState(ACTOR_STATE::WALK);
 }
 
 void Actor::InversionImage(HDC& memdc, RECT dstRect, RECT srcImageRect)
@@ -338,6 +325,12 @@ void Actor::InversionImage(HDC& memdc, RECT dstRect, RECT srcImageRect)
 	SelectObject(memdc2, oldBit1);
 	DeleteObject(hBit1);
 	DeleteDC(memdc2);
+}
+
+void Actor::ChangeState(ACTOR_STATE state)
+{
+	State = state;
+	Frame = 0;
 }
 
 
@@ -386,32 +379,28 @@ void Actor::ProcessDownInput(WPARAM wParam)
 	case 'W':
 	case VK_UP:
 	{
-		KeyInputInfo = KeyInputInfo | 0b1000;
-		Direction = ACTOR_DIRECTION::UP;
+		KeyInputInfo =  KeyInputInfo | 0b1000;
 		break;
 	}
 	case 'a':
 	case 'A':
 	case VK_LEFT:
 	{
-		KeyInputInfo = KeyInputInfo | 0b0010;
-		Direction = ACTOR_DIRECTION::LEFT;
+		KeyInputInfo =  KeyInputInfo | 0b0010;
 		break;
 	}
 	case 's':
 	case 'S':
 	case VK_DOWN:
 	{
-		KeyInputInfo = KeyInputInfo | 0b0100;
-		Direction = ACTOR_DIRECTION::DOWN;
+		KeyInputInfo =  KeyInputInfo | 0b0100;
 		break;
 	}
 	case 'd':
 	case 'D':
 	case VK_RIGHT:
 	{
-		KeyInputInfo = KeyInputInfo | 0b0001;
-		Direction = ACTOR_DIRECTION::RIGHT;
+		KeyInputInfo =  KeyInputInfo | 0b0001;
 		break;
 	}
 	default:

@@ -19,5 +19,6 @@
 
 #include <string>
 #include <array>
+#include <vector>
 #include <iostream>
 #include <chrono>

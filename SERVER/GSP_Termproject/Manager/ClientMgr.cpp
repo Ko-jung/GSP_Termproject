@@ -25,6 +25,23 @@ ClientMgr::~ClientMgr()
 	}
 }
 
+void ClientMgr::InitNPC()
+{
+	std::cout << "InitNPC begin.\n";
+	for (int i = MAX_NPC; i < Clients.size(); i++)
+	{
+		Clients[i] = new Client();
+		Clients[i]->ClientNum = i;
+		sprintf_s(Clients[i]->PlayerName, "NPC%d", i);
+		Clients[i]->Position = { (rand() % 2000) / 100 + 100.f, (rand() % 2000) / 100 + 100.f };
+		Clients[i]->Direction = ACTOR_DIRECTION::DOWN;
+		Clients[i]->State = CLIENT_STATE::INGAME;
+
+		SectorMgr::Instance()->UnsafeInsert(Clients[i]);
+	}
+	std::cout << "InitNPC end.\n";
+}
+
 void ClientMgr::RecvProcess(int id, int bytes, OverExpansion* exp)
 {
 	Clients[id]->RecvProcess(bytes, exp);
@@ -132,8 +149,10 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 
 	//c->send_move_packet(c_id);
 
-	for (auto& pClient : new_vl) {
-		//if (is_pc(pl)) {
+	for (auto& pClient : new_vl)
+	{
+		if (!IsNPC(pClient))
+		{
 			pClient->ViewListLock.lock();
 			if (pClient->ViewList.count(c)) {
 				pClient->ViewListLock.unlock();
@@ -143,7 +162,7 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 				pClient->ViewListLock.unlock();
 				pClient->SendAddPlayer(c);
 			}
-		//}
+		}
 		//else WakeUpNPC(pl, c_id);
 
 		if (OldTargetViewList.count(pClient) == 0)
@@ -153,7 +172,7 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 	for (auto& pClient : OldTargetViewList)
 		if (0 == new_vl.count(pClient)) {
 			c->SendRemovePlayer(pClient);
-			//if (is_pc(pl))
+			if (!IsNPC(pClient))
 				pClient->SendRemovePlayer(c);
 		}
 }
@@ -180,7 +199,7 @@ void ClientMgr::SendAddPlayerUseSector(Client* c)
 			if (pClient->ClientNum == c->ClientNum) continue;
 			if (false == CanSee(c, pClient))
 				continue;
-			//if (is_pc(pClient->ClientNum))
+			if (IsNPC(pClient))
 				pClient->SendAddPlayer(c);
 			//else WakeUpNPC(pClient->ClientNum, c->ClientNum);
 			c->SendAddPlayer(pClient);
@@ -193,6 +212,11 @@ bool ClientMgr::CanSee(const Client* c1, const Client* c2)
 {
 	if (abs(c1->Position.X - c2->Position.X) > VIEW_RANGE) return false;
 	return abs(c1->Position.Y - c2->Position.Y) <= VIEW_RANGE;
+}
+
+bool ClientMgr::IsNPC(const Client* Target)
+{
+	return Target->ClientNum >= MAX_USER;
 }
 
 void ClientMgr::ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c)

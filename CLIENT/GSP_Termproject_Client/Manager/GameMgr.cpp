@@ -13,6 +13,8 @@
 
 #include "MapMgr.h"
 
+#include "../Monster.h"
+
 void CALLBACK recv_callback(DWORD errors, DWORD r_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
 void CALLBACK send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
 
@@ -28,6 +30,8 @@ GameMgr::GameMgr() :
 	RecvOverExp = new OverExpansion;
 
 	MapMgr::Instance()->Init();
+
+	FPS = 30.f;
 }
 
 GameMgr::~GameMgr()
@@ -74,6 +78,10 @@ void GameMgr::Draw(HDC& memdc)
 {
 	DrawBoard(memdc);
 
+	for (const auto& a : Monsters)
+	{
+		a.second->Draw(memdc);
+	}
 	for (const auto& a : OtherActors)
 	{
 		a.second->Draw(memdc);
@@ -88,6 +96,10 @@ void GameMgr::Update()
 	float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - PrevTime).count() / 1000.f;
 	PrevTime = std::chrono::system_clock::now();
 
+	for (const auto& a : Monsters)
+	{
+		a.second->Update(elapsedTime);
+	}
 	for (const auto& a : OtherActors)
 	{
 		a.second->Update(elapsedTime);
@@ -138,10 +150,20 @@ void GameMgr::SendPosition()
 
 void GameMgr::ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP)
 {
-	std::shared_ptr<Actor> NewActor = std::make_shared<Actor>(false);
-	NewActor->InitUsePacket(SAOP);
+	if (SAOP->id < MAX_USER)
+	{
+		std::shared_ptr<Actor> NewActor = std::make_shared<Actor>(false);
+		NewActor->InitUsePacket(SAOP);
 
-	OtherActors.insert(std::make_pair(SAOP->id, NewActor));
+		OtherActors.insert(std::make_pair(SAOP->id, NewActor));
+	}
+	else
+	{
+		std::shared_ptr<Monster> NewActor = std::make_shared<Monster>();
+		NewActor->InitUsePacket(SAOP);
+
+		Monsters.insert(std::make_pair(SAOP->id, NewActor));
+	}
 }
 
 void GameMgr::ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP)

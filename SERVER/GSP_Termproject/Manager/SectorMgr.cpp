@@ -11,6 +11,12 @@ void SectorMgr::Insert(Client* Target)
 	SectorSet.SectorLock.unlock();
 }
 
+void SectorMgr::UnsafeInsert(Client* Target)
+{
+	Sector& SectorSet = Sectors[Target->Position.X / SECTORSIZE][Target->Position.Y / SECTORSIZE];
+	SectorSet.SectorClient.insert(Target);
+}
+
 void SectorMgr::Remove(Client* Target)
 {
 	Sector& SectorSet = Sectors[Target->Position.X / SECTORSIZE][Target->Position.Y / SECTORSIZE];

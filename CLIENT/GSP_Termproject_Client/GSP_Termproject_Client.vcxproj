@@ -133,6 +133,7 @@
     <ClCompile Include="GamePlayStatic.cpp" />
     <ClCompile Include="Manager\GameMgr.cpp" />
     <ClCompile Include="Manager\MapMgr.cpp" />
+    <ClCompile Include="Monster.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\EnumDef.h" />
@@ -145,6 +146,7 @@
     <ClInclude Include="GamePlayStatic.h" />
     <ClInclude Include="Manager\GameMgr.h" />
     <ClInclude Include="Manager\MapMgr.h" />
+    <ClInclude Include="Monster.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>

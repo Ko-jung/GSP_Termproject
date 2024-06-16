@@ -50,17 +50,20 @@ public:
 
 	SOCKET& GetSocket() { return ServerSocket; }
 	Actor* GetOwnActor() { return OwnActor.get(); }
+	float GetFPS() { return FPS; }
 
 	void SetOwnActorID(const char* ID);
 
 protected:
 	//std::vector<bool> KeyInputInfo;
+	float FPS;
 	float ElapsedTime;
 	
 	std::shared_ptr<Actor> OwnActor;
 	int SerialNum;
 
 	std::unordered_map<int, std::shared_ptr<Actor>> OtherActors;
+	std::unordered_map<int, std::shared_ptr<class Monster>> Monsters;
 
 	CImage WorldImageTile;
 

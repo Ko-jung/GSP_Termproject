@@ -11,6 +11,7 @@ public:
 
 public:
 	static POSITION GetOwnActorPosition();
+	static float GetFPS();
 
 private:
 	class GameMgr* GameManager;

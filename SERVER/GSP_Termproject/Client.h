@@ -48,5 +48,8 @@ public:
 
 	static int ImageSpriteWidth;
 	static int ImageSpriteHeight;
+
+	static int MonsterImageSpriteWidth;
+	static int MonsterImageSpriteHeight;
 };
 

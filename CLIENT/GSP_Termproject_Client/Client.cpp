@@ -185,7 +185,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_TIMER:
     {
         Game->Update();
-        SleepEx(100, true);
+        SleepEx(Game->GetFPS() / 1000, true);
         InvalidateRect(hWnd, NULL, false);
         break;
     }
@@ -225,7 +225,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //    Game->Recv();
         //}
 
-        SetTimer(hWnd, 0, 100, nullptr);
+        SetTimer(hWnd, 0, Game->GetFPS() / 1000.f, nullptr);
         break;
     }
     case WM_DESTROY:
