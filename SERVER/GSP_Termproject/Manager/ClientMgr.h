@@ -3,6 +3,7 @@
 #include "../stdafx.h"
 #include "../Define.h"
 #include "../../../Common/protocol.h"
+#include "../../../Common/EnumDef.h"
 #include "atomic"
 
 #include <array>
@@ -39,6 +40,7 @@ public:
 	void ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c);
 	void ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c);
 	void ProcessNPCMove(int id, OverExpansion* exp);
+	void ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c);
 
 private:
 	std::array<Client*, MAX_USER + MAX_NPC> Clients;

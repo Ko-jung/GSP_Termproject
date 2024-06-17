@@ -7,6 +7,8 @@
 #include "SectorMgr.h"
 #include "TimerMgr.h"
 
+#include "../CollisionChecker.h"
+
 #include <atomic>
 
 ClientMgr::ClientMgr() :
@@ -218,7 +220,6 @@ void ClientMgr::SendAddPlayerUseSector(Client* c)
 
 void ClientMgr::NPCRandomMove(Client* NPC)
 {
-	std::cout << "NPCRandomMove Called Npc ClientNum is " << NPC->ClientNum << std::endl;
 	// 1. make OldViewList
 	std::unordered_set<Client*> OldViewList;
 	SectorMgr::Instance()->MakeViewList(OldViewList, NPC);
@@ -343,7 +344,7 @@ void ClientMgr::WakeUpNPC(int NpcID, int WakerID)
 	bool old_state = false;
 	if (false == std::atomic_compare_exchange_strong(&NPC->IsActive, &old_state, true))
 		return;
-	TimerEvent evnt{ NpcID, std::chrono::system_clock::now(), EV_RANDOM_MOVE, 0 };
+	TimerEvent evnt{ NpcID, std::chrono::system_clock::now(), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
 	TimerMgr::Instance()->Insert(evnt);
 }
 
@@ -417,11 +418,74 @@ void ClientMgr::ProcessNPCMove(int id, OverExpansion* exp)
 		if (KeepAlive)
 		{
 			NPCRandomMove(NPC);
-			TimerEvent evnt{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EV_RANDOM_MOVE, 0 };
+			TimerEvent evnt{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
 			TimerMgr::Instance()->Insert(evnt);
 		}
 		else
 		{
 			NPC->IsActive = false;
 		}
+}
+
+void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c)
+{
+	POSITION ClientPos = c->Position;
+	ACTOR_DIRECTION ClientDirection = c->Direction;
+
+	// TODO: Weapon Variable
+	float WeaponDamage = 10.f;
+
+	// Create Collision Box
+	RectF AttackCollisionBox;
+
+	if (CAP->WeaponType == (BYTE)WEAPON_TYPE::SWORD)
+	{
+		WeaponDamage = 40.f;
+		switch (ClientDirection)
+		{
+		case ACTOR_DIRECTION::DOWN:
+			AttackCollisionBox = { ClientPos.X - 0.5f, ClientPos.Y + 1.f, ClientPos.X + 1.5f, ClientPos.Y + 2.f };
+			break;
+		case ACTOR_DIRECTION::RIGHT:
+			AttackCollisionBox = { ClientPos.X + 1.f, ClientPos.Y - 0.5f, ClientPos.X + 1.f + 1.f, ClientPos.Y + 1.5f };
+			break;
+		case ACTOR_DIRECTION::UP:
+			AttackCollisionBox = { ClientPos.X - 0.5f, ClientPos.Y - 1.f, ClientPos.X + 1.5f, ClientPos.Y };
+			break;
+		case ACTOR_DIRECTION::LEFT:
+			AttackCollisionBox = { ClientPos.X - 1.f, ClientPos.Y - 0.5f, ClientPos.X, ClientPos.Y + 1.5f };
+			break;
+		default:
+			break;
+		}
+	}
+	else if (CAP->WeaponType == (BYTE)WEAPON_TYPE::PICKAXE)
+	{
+		WeaponDamage = 75.f;
+
+	}
+
+	std::unordered_set<Client*> SectorClient;
+	std::unordered_set<Client*> CollideClient;
+	SectorMgr::Instance()->MakeViewList(SectorClient, c, true);
+	// Apply Damage
+	for (auto& pClient : SectorClient)
+	{
+		RectF TargetCollisionBox = pClient->GetCollisionFBox();
+		if (CollisionChecker::CollisionCheck(TargetCollisionBox, AttackCollisionBox))
+		{
+			bool IsDead = pClient->ApplyDamage(c, WeaponDamage);
+			CollideClient.insert(pClient);
+		}
+	}
+
+	// Send Result
+	SectorClient.insert(c);
+	for (auto& pClient : SectorClient)
+	{
+		for (auto& pCollideClient : CollideClient)
+		{
+			if (!IsNPC(pClient)) pClient->SendStatChange(pCollideClient);
+		}
+	}
 }

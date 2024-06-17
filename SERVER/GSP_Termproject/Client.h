@@ -19,14 +19,17 @@ public:
 
 	void StressTestMove(char Direction);
 	void Move(POSITION NewPos, char direction);
+	bool ApplyDamage(Client* Attacker, const int Damage);
 
 	RECT GetCollisionBox();
+	RectF GetCollisionFBox();
 
 	void SendLoginInfo();
 	void SendStressTestMovePos();
 	void SendMovePos(Client* c);
 	void SendAddPlayer(Client* c);
 	void SendRemovePlayer(Client* c);
+	void SendStatChange(Client* c);
 
 	std::atomic_bool IsActive;
 	int ClientNum;
@@ -41,6 +44,10 @@ public:
 	float Speed;
 	CLIENT_STATE State;
 	float Size;
+	int MaxHP;
+	std::atomic<int> CurrentHP;
+	int Experience;
+	int Level;
 
 	std::mutex StateMutex;
 	int LastMoveTime;
@@ -49,8 +56,5 @@ public:
 
 	static int ImageSpriteWidth;
 	static int ImageSpriteHeight;
-
-	static int MonsterImageSpriteWidth;
-	static int MonsterImageSpriteHeight;
 };
 

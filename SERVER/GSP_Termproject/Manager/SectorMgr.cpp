@@ -44,7 +44,7 @@ void SectorMgr::MoveSector(Client* Target, int TargetPrevSectorX, int TargetPrev
 	}
 }
 
-void SectorMgr::MakeViewList(std::unordered_set<Client*>& ViewList, Client* Center)
+void SectorMgr::MakeViewList(std::unordered_set<Client*>& ViewList, Client* Center, bool IsIncludeNPC)
 {
 	for (int i = 0; i < 9; i++)
 	{
@@ -58,7 +58,7 @@ void SectorMgr::MakeViewList(std::unordered_set<Client*>& ViewList, Client* Cent
 		for (auto& pClient : sector->SectorClient)
 		{
 			if (pClient == Center) continue;
-			if (ClientMgr::IsNPC(pClient)) continue;
+			if (!IsIncludeNPC && ClientMgr::IsNPC(pClient)) continue;
 			if (ClientMgr::CanSee(pClient, Center))
 			{
 				ViewList.insert(pClient);

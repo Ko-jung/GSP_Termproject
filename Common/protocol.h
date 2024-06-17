@@ -74,12 +74,18 @@ struct CS_CHAT_PACKET : PACKET {
 
 struct CS_TELEPORT_PACKET : PACKET {			// 랜덤으로 텔레포트 하는 패킷, 동접 테스트에 필요
 
-	CS_TELEPORT_PACKET() : PACKET(CS_ATTACK) { size = sizeof(CS_TELEPORT_PACKET); }
+	CS_TELEPORT_PACKET() : PACKET(CS_TELEPORT) { size = sizeof(CS_TELEPORT_PACKET); }
 };
 
 struct CS_LOGOUT_PACKET : PACKET {
 
-	CS_LOGOUT_PACKET() : PACKET(CS_TELEPORT) { size = sizeof(CS_LOGOUT_PACKET); }
+	CS_LOGOUT_PACKET() : PACKET(CS_LOGOUT) { size = sizeof(CS_LOGOUT_PACKET); }
+};
+
+struct CS_ATTACK_PACKET : PACKET
+{
+	unsigned char WeaponType;
+	CS_ATTACK_PACKET() : PACKET(CS_ATTACK) { size = sizeof(CS_ATTACK_PACKET); }
 };
 
 struct SC_LOGIN_INFO_PACKET : PACKET {
@@ -141,6 +147,7 @@ struct SC_LOGIN_FAIL_PACKET : PACKET {
 };
 
 struct SC_STAT_CHANGE_PACKET : PACKET {
+	int		id;
 	int		hp;
 	int		max_hp;
 	int		exp;

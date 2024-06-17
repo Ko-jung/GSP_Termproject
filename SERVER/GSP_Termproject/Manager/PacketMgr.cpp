@@ -31,6 +31,7 @@ void PacketMgr::ProcessPacket(PACKET* packet, Client* c)
 	}
 	case CS_ATTACK:
 	{
+		ClientMgr::Instance()->ProcessAttack(reinterpret_cast<CS_ATTACK_PACKET*>(packet), c);
 		break;
 	}
 	case CS_TELEPORT:

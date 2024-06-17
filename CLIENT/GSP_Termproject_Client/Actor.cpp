@@ -7,6 +7,7 @@
 
 CImage Actor::Img;
 std::vector<std::vector<std::vector<std::pair<int, int>>>> Actor::Sprites;
+std::vector<float> Actor::SprintFrameRate;
 int Actor::ImageSpriteWidth;
 int Actor::ImageSpriteHeight;
 
@@ -14,8 +15,8 @@ Actor::Actor(bool IsPossess) :
 	IsPossessed(IsPossess),
 	Position(100.f, 100.f),
 	Speed(5.f),
-	State(ACTOR_STATE::WALK),
-	Direction(ACTOR_DIRECTION::LEFT),
+	State(ACTOR_STATE::ATTACK),
+	Direction(ACTOR_DIRECTION::DOWN),
 	KeyInputInfo(0),
 	Frame(0.f),
 	Size(1.f)
@@ -26,18 +27,39 @@ Actor::Actor(bool IsPossess) :
 		Img.Load(TEXT("Image/Player/Actor.png"));
 
 	ImageSpriteWidth = 16;
-	ImageSpriteHeight = 33;
+	ImageSpriteHeight = 32;
 
 	LoadSprite();
 }
 
 void Actor::Update(float elapsedTime)
 {
-	Frame += elapsedTime * 3.f;
-	if (Frame > Sprites[(int)State][(int)Direction].size() - FLT_MIN)
-		Frame = 0.f;
-
+	UpdateAnim(elapsedTime);
 	Move(elapsedTime);
+}
+
+void Actor::UpdateAnim(float elapsedTime)
+{
+	Frame += elapsedTime * SprintFrameRate[(int)State];
+	if (Frame > Sprites[(int)State][(int)Direction].size() - FLT_MIN)
+	{
+		Frame = 0.f;
+		switch (State)
+		{
+		case ACTOR_STATE::IDLE:
+			break;
+		case ACTOR_STATE::WALK:
+			break;
+		case ACTOR_STATE::RUN:
+			break;
+		case ACTOR_STATE::ATTACK:
+			ChangeState(ACTOR_STATE::IDLE);
+			IsCanMove = true;
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 void Actor::Draw(HDC& memdc)
@@ -83,7 +105,7 @@ void Actor::Draw(HDC& memdc)
 	{	// Draw Arm
 		int SrcX = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].first;
 		int SrcY = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].second;
-
+	
 		RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
 		if (Direction != ACTOR_DIRECTION::LEFT)
 		{
@@ -113,6 +135,8 @@ void Actor::InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP)
 void Actor::LoadSprite()
 {
 	if (not Sprites.empty()) return;
+
+	SprintFrameRate = { 1.f, 3.f, 3.f, 20.f };
 
 	std::vector<int> IndexList{ 0,1,2,1 };
 
@@ -151,6 +175,18 @@ void Actor::LoadSprite()
 			TempVector.push_back(TempTempVector);
 		}
 		Sprites.push_back(TempVector);
+		 
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// ATTACK
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 6; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j), ImageSpriteHeight * 4));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
 	}
 
 	{	// ARM
@@ -182,6 +218,18 @@ void Actor::LoadSprite()
 			for (int j = 0; j < 2; j++)
 			{
 				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (i * 2 + j + 6), ImageSpriteHeight * 3));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// ATTACK
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 6; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j + 12), ImageSpriteHeight * 4));
 			}
 			TempVector.push_back(TempTempVector);
 		}
@@ -223,12 +271,11 @@ RECT Actor::GetRectDstWithPos()
 
 void Actor::Move(float elapsedTime)
 {
+	// ATTACK etc ....
+	if (!IsCanMove) return;
+
 	POSITION NewPos = Position;
 	MapMgr* MapInstance = MapMgr::Instance();
-	std::array<std::array<WORD, 2000>, 2000>* abcd = MapInstance->GetMap();
-	//float NewPosRight = NewPos.X + (float)ImageSpriteWidth / BOARDSIZE * Size;
-	//float NewPosBottom = NewPos.Y + (float)ImageSpriteHeight/ BOARDSIZE * Size;
-
 
 	int ForceX = 0;
 	int ForceY = 0;
@@ -345,9 +392,10 @@ void Actor::InversionImage(HDC& memdc, RECT dstRect, RECT srcImageRect)
 
 void Actor::ChangeState(ACTOR_STATE state)
 {
-	if (State == state) return;
-	State = state;
-	Frame = 0;
+	 if (State == state) return;
+
+	 State = state;
+	 Frame = 0;
 }
 
 
@@ -423,6 +471,12 @@ void Actor::ProcessDownInput(WPARAM wParam)
 	default:
 		break;
 	}
+}
+
+void Actor::ProcessAttack()
+{
+	ChangeState(ACTOR_STATE::ATTACK);
+	IsCanMove = false;
 }
 
 void Actor::ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP)

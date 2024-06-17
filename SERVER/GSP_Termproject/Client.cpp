@@ -12,21 +12,18 @@
 int Client::ImageSpriteWidth;
 int Client::ImageSpriteHeight;
 
-int Client::MonsterImageSpriteWidth;
-int Client::MonsterImageSpriteHeight;
-
 Client::Client() :
 	IsActive(false),
 	ClientNum(-1),
 	RemainDataLen(0),
 	Speed(0.7f),
-	Size(1.f)
+	Size(1.f),
+	Experience(0.f)
 {
 	ImageSpriteWidth = 16;
-	ImageSpriteHeight = 33;
+	ImageSpriteHeight = 32;
 
-	MonsterImageSpriteWidth = 18;
-	MonsterImageSpriteHeight = 17;
+	MaxHP = CurrentHP = 100;
 }
 
 Client::~Client()
@@ -169,6 +166,21 @@ void Client::Move(POSITION NewPos, char direction)
 	}
 }
 
+bool Client::ApplyDamage(Client* Attacker, const int Damage)
+{
+	CurrentHP.fetch_add(-Damage);
+
+	// float NowHp = CurrentHP - Damage;
+	// CurrentHP.compare_exchange_strong(NowHp, CurrentHP - Damage);
+
+	if (CurrentHP <= 0)
+	{
+		CurrentHP = 0;
+		return true;
+	}
+	return false;
+}
+
 RECT Client::GetCollisionBox()
 {
 	RECT ReturnRect;
@@ -178,6 +190,11 @@ RECT Client::GetCollisionBox()
 	ReturnRect.bottom = (LONG)Position.Y + (LONG)Size * ImageSpriteHeight;
 
 	return ReturnRect;
+}
+
+RectF Client::GetCollisionFBox()
+{
+	return RectF(Position.X, Position.Y, Position.X + 1.f, Position.Y + 1.f);
 }
 
 void Client::SendLoginInfo()
@@ -226,6 +243,8 @@ void Client::SendAddPlayer(Client* c)
 	SAOP.type = SC_ADD_OBJECT;
 	SAOP.x = (short)c->Position.X;
 	SAOP.y = (short)c->Position.Y;
+	SAOP.hp = c->CurrentHP;
+	SAOP.max_hp= c->MaxHP;
 
 	ViewListLock.lock();
 	ViewList.insert(c);
@@ -248,4 +267,16 @@ void Client::SendRemovePlayer(Client* c)
 	SC_REMOVE_OBJECT_PACKET SROP;
 	SROP.id = c->ClientNum;
 	Send(&SROP);
+}
+
+void Client::SendStatChange(Client* c)
+{
+	SC_STAT_CHANGE_PACKET SSCP;
+	SSCP.id = c->ClientNum;
+	SSCP.hp = c->CurrentHP;
+	SSCP.max_hp = c->MaxHP;
+	SSCP.exp = c->Experience;
+	SSCP.level = c->Level;
+
+	Send(&SSCP);
 }

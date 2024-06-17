@@ -38,6 +38,7 @@ enum class ACTOR_STATE : BYTE
 {
 	IDLE,
 	WALK,
+	RUN,
 	ATTACK,
 	END,
 };
@@ -57,7 +58,20 @@ enum class MONSTER_STATE : BYTE
 	END,
 };
 
-enum EVENT_TYPE : BYTE
+enum class EVENT_TYPE : BYTE
 {
 	EV_RANDOM_MOVE 
+};
+
+enum class MOUSE_TYPE : BYTE
+{
+	LEFT_BTN,
+	MIDDLE_BTN,
+	RIGHT_BTN
+};
+
+enum class WEAPON_TYPE : BYTE
+{
+	SWORD,
+	PICKAXE
 };

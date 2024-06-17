@@ -12,13 +12,18 @@ Monster::Monster() :
 	Direction(ACTOR_DIRECTION::LEFT),
 	Frame(0.f),
 	Size(1.f),
-	State(MONSTER_STATE::IDLE)
+	Experience(0),
+	Level(0),
+	State(MONSTER_STATE::IDLE),
+	ShowHpBarTimer(3.f)
 {
 	if (Img.IsNull())
 		Img.Load(TEXT("Image/Monster/FireMonster.png"));
 
 	ImageSpriteWidth	= 18;
 	ImageSpriteHeight	= 17;
+
+	MaxHp = CurrentHp = 100;
 
 	LoadSprite();
 }
@@ -42,6 +47,9 @@ void Monster::Update(float elapsedTime)
 	Frame += elapsedTime * 6.f;
 	if (Frame > Sprites[(int)State][(int)Direction].size())
 		Frame = 0.f;
+
+	if (ShowHpBarTimer > 0.f)
+		ShowHpBarTimer -= elapsedTime;
 }
 
 void Monster::Draw(HDC& memdc)
@@ -61,6 +69,23 @@ void Monster::Draw(HDC& memdc)
 	RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
 
 	Img.Draw(memdc, ImageDst, ImageSrc);
+
+	if (ShowHpBarTimer > 0.f)
+	{
+		HBRUSH RedBrush = CreateSolidBrush(RGB(255, 0, 0)); 
+		//Rectangle(memdc, ImageDst.left, ImageDst.top - 10, ImageDst.right, ImageDst.top);
+		HBRUSH WhiteBrush = CreateSolidBrush(RGB(255, 255, 255));
+
+		RECT HpBackgroundRect = { ImageDst.left, ImageDst.top - 10, ImageDst.right, ImageDst.top };
+		RECT HpRect = { ImageDst.left, ImageDst.top - 10,
+			ImageDst.left + (ImageDst.right - ImageDst.left) * ((float)CurrentHp/MaxHp), ImageDst.top};
+
+		FillRect(memdc, &HpBackgroundRect, WhiteBrush);
+		FillRect(memdc, &HpRect, RedBrush);
+
+		DeleteObject(RedBrush);
+		DeleteObject(WhiteBrush);
+	}
 }
 
 void Monster::LoadSprite()
@@ -91,8 +116,42 @@ void Monster::LoadSprite()
 	Sprites.push_back(TempVector);
 }
 
+void Monster::ApplyDamage(int Damage)
+{
+	ShowHpBarTimer = 3.f;
+	CurrentHp -= Damage;
+}
+
 void Monster::ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP)
 {
 	Position = { SDMOP->x , SDMOP->y};
 	Direction = (ACTOR_DIRECTION)SDMOP->direction;
+}
+
+void Monster::ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP)
+{
+	if (CurrentHp != SSCP->hp)
+	{
+		CurrentHp = SSCP->hp;
+		ShowHpBarTimer = 3.f;
+	}
+
+	if (MaxHp != SSCP->max_hp)
+	{
+		ShowHpBarTimer = 3.f;
+		if (MaxHp > SSCP->max_hp)
+		{
+			MaxHp = SSCP->max_hp;
+			if (CurrentHp > MaxHp) CurrentHp = MaxHp;
+		}
+		else
+		{
+			CurrentHp += (SSCP->max_hp - MaxHp);
+		}
+	}
+
+	{
+		Experience = SSCP->exp;
+		Level = SSCP->level;
+	}
 }

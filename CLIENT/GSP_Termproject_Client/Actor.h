@@ -18,6 +18,7 @@ public:
 
 	void InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP);
 	void Update(float elapsedTime);
+	void UpdateAnim(float elapsedTime);
 	void Draw(HDC& memdc);
 	void LoadSprite();
 
@@ -38,12 +39,15 @@ public:
 	//char GetKeyInputInfo() { return KeyInputInfo; }
 	const char* GetPlayerName() { return Name.c_str(); }
 
+	void ProcessAttack();
+
 	void ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP);
 	void ProcessMove(SC_MOVE_OBJECT_PACKET* SLIP);
 	void ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP);
 
 protected:
 	bool IsPossessed;
+	bool IsCanMove;
 
 	POSITION Position;
 	float Speed;
@@ -64,6 +68,7 @@ protected:
 
 	static CImage Img;
 	static std::vector<std::vector<std::vector<std::pair<int, int>>>> Sprites;
+	static std::vector<float> SprintFrameRate;
 	static int ImageSpriteWidth;
 	static int ImageSpriteHeight;
 };

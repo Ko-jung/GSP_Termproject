@@ -112,14 +112,46 @@ void GameMgr::Update()
 	std::cout << OwnActor->GetLocation().X << ", " << OwnActor->GetLocation().Y << std::endl;
 }
 
-void GameMgr::ProcessUpInput(WPARAM wParam)
+void GameMgr::ProcessKeyUpInput(WPARAM wParam)
 {	
 	OwnActor->ProcessUpInput(wParam);
 }
 
-void GameMgr::ProcessDownInput(WPARAM wParam)
+void GameMgr::ProcessKeyDownInput(WPARAM wParam)
 {
 	OwnActor->ProcessDownInput(wParam);
+}
+
+void GameMgr::ProcessMouseUpInput(LPARAM lParam, MOUSE_TYPE MouseType)
+{
+	switch (MouseType)
+	{
+	case MOUSE_TYPE::LEFT_BTN:
+		break;
+	case MOUSE_TYPE::MIDDLE_BTN:
+		break;
+	case MOUSE_TYPE::RIGHT_BTN:
+		break;
+	default:
+		break;
+	}
+}
+
+void GameMgr::ProcessMouseDownInput(LPARAM lParam, MOUSE_TYPE MouseType)
+{
+	switch (MouseType)
+	{
+	case MOUSE_TYPE::LEFT_BTN:
+		OwnActor->ProcessAttack();
+		SendAttack();
+		break;
+	case MOUSE_TYPE::MIDDLE_BTN:
+		break;
+	case MOUSE_TYPE::RIGHT_BTN:
+		break;
+	default:
+		break;
+	}
 }
 
 void GameMgr::DrawBoard(HDC& memdc)
@@ -146,6 +178,13 @@ void GameMgr::SendPosition()
 	CMP.direction = (char)OwnActor->GetDirection();
 
 	Send(&CMP);
+}
+
+void GameMgr::SendAttack()
+{
+	CS_ATTACK_PACKET CAP;
+	CAP.WeaponType = (BYTE)WEAPON_TYPE::SWORD;
+	Send(&CAP);
 }
 
 void GameMgr::ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP)
@@ -175,6 +214,53 @@ void GameMgr::ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP)
 	else
 	{
 		Monsters.erase(SROP->id);
+	}
+}
+
+void GameMgr::ProcessMoveObject(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP)
+{
+	if (SDMOP->id == SerialNum)
+	{
+		//OwnActor->ProcessMove(SDMOP);
+		std::cout << "The server adjusted the position" << std::endl;
+	}
+	else
+	{
+		Actor* TargetActor = nullptr;
+		if (OtherActors.find(SDMOP->id) != OtherActors.end())
+		{
+			OtherActors[SDMOP->id]->ProcessMove(SDMOP);
+		}
+		else if (Monsters.find(SDMOP->id) != Monsters.end())
+		{
+			Monsters[SDMOP->id]->ProcessMove(SDMOP);
+		}
+		else
+		{
+			std::cout << "Get SC_8DIRECT_MOVE_OBJECT_PACKET but id:" << SDMOP->id << " is Cant Find!" << std::endl;
+			return;
+		}
+	}
+}
+
+void GameMgr::ProcessStatChange(SC_STAT_CHANGE_PACKET* SSCP)
+{
+	if (SSCP->id == SerialNum)
+	{
+
+	}
+	if (OtherActors.find(SSCP->id) != OtherActors.end())
+	{
+		//OtherActors[SSCP->id]->(SDMOP);
+	}
+	else if (Monsters.find(SSCP->id) != Monsters.end())
+	{
+		Monsters[SSCP->id]->ProcessChangeStat(SSCP);
+	}
+	else
+	{
+		std::cout << "Get SC_STAT_CHANGE_PACKET but id:" << SSCP->id << " is Cant Find!" << std::endl;
+		return;
 	}
 }
 
@@ -228,35 +314,11 @@ void GameMgr::ProcessRecv(PACKET* packet)
 	case SC_CHAT:
 		break;
 	case SC_STAT_CHANGE:
+		ProcessStatChange(reinterpret_cast<SC_STAT_CHANGE_PACKET*>(packet));
 		break;
 	case SC_8DIRECT_MOVE_OBJECT:
 	{
-		SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP = reinterpret_cast<SC_8DIRECT_MOVE_OBJECT_PACKET*>(packet);
-	
-		if (SDMOP->id == SerialNum)
-		{
-			//OwnActor->ProcessMove(SDMOP);
-			std::cout << "The server adjusted the position" << std::endl;
-		}
-		else
-		{
-			Actor* TargetActor = nullptr;
-			if (OtherActors.find(SDMOP->id) != OtherActors.end())
-			{
-				OtherActors[SDMOP->id]->ProcessMove(SDMOP);
-			}
-			else if (Monsters.find(SDMOP->id) != Monsters.end())
-			{
-				Monsters[SDMOP->id]->ProcessMove(SDMOP);
-			}
-			else
-			{
-				std::cout << "Get SC_8DIRECT_MOVE_OBJECT_PACKET but id:" << SDMOP->id << " is Cant Find!" << std::endl;
-				return;
-			}
-
-		}
-		
+		ProcessMoveObject(reinterpret_cast<SC_8DIRECT_MOVE_OBJECT_PACKET*>(packet));
 		break;
 	}
 	default:
@@ -272,6 +334,7 @@ void GameMgr::Send(PACKET* p)
 	if (ret != 0 && ret != WSA_IO_PENDING)
 	{
 		error_display("WSASend Error: ", WSAGetLastError());
+		delete exp;
 	}
 }
 

@@ -194,10 +194,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     //    InvalidateRect(hWnd, NULL, true);
     //    break;
     case WM_KEYUP:
-        Game->ProcessUpInput(wParam);
+        Game->ProcessKeyUpInput(wParam);
         break;
     case WM_KEYDOWN:
-        Game->ProcessDownInput(wParam);
+        Game->ProcessKeyDownInput(wParam);
+        break;
+    case WM_RBUTTONUP:
+        Game->ProcessMouseUpInput(lParam, MOUSE_TYPE::RIGHT_BTN);
+        break;
+    case WM_LBUTTONUP:
+        Game->ProcessMouseUpInput(lParam, MOUSE_TYPE::LEFT_BTN);
+        break;
+    case WM_RBUTTONDOWN:
+        Game->ProcessMouseDownInput(lParam, MOUSE_TYPE::RIGHT_BTN);
+        break;
+    case WM_LBUTTONDOWN:
+        Game->ProcessMouseDownInput(lParam, MOUSE_TYPE::LEFT_BTN);
         break;
     case WM_CREATE:
     {

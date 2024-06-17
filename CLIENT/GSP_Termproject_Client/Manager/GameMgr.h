@@ -37,16 +37,21 @@ public:
 	//Game Logic
 	void Draw(HDC& memdc);
 	void Update();
-	void ProcessUpInput(WPARAM wParam);
-	void ProcessDownInput(WPARAM wParam);
+	void ProcessKeyUpInput(WPARAM wParam);
+	void ProcessKeyDownInput(WPARAM wParam);
+	void ProcessMouseUpInput(LPARAM lParam, MOUSE_TYPE MouseType);
+	void ProcessMouseDownInput(LPARAM lParam, MOUSE_TYPE MouseType);
 
 	void DrawBoard(HDC& memdc);
 
 	void SendLogin();
 	void SendPosition();
+	void SendAttack();
 
 	void ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP);
 	void ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP);
+	void ProcessMoveObject(SC_8DIRECT_MOVE_OBJECT_PACKET* SCDMOP);
+	void ProcessStatChange(SC_STAT_CHANGE_PACKET* SSCP);
 
 	SOCKET& GetSocket() { return ServerSocket; }
 	Actor* GetOwnActor() { return OwnActor.get(); }
