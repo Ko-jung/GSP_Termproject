@@ -96,8 +96,14 @@ void GameMgr::Update()
 	float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - PrevTime).count() / 1000.f;
 	PrevTime = std::chrono::system_clock::now();
 
+	std::vector<int> RemoveTarget;
 	for (const auto& a : Monsters)
 	{
+		if (a.second->GetIsCanRemove())
+		{
+			RemoveTarget.push_back(a.first);
+			continue;
+		}
 		a.second->Update(elapsedTime);
 	}
 	for (const auto& a : OtherActors)
@@ -109,7 +115,11 @@ void GameMgr::Update()
 
 	SendPosition();
 
-	std::cout << OwnActor->GetLocation().X << ", " << OwnActor->GetLocation().Y << std::endl;
+	// std::cout << OwnActor->GetLocation().X << ", " << OwnActor->GetLocation().Y << std::endl;
+	for (const auto& i : RemoveTarget)
+	{
+		Monsters.erase(i);
+	}
 }
 
 void GameMgr::ProcessKeyUpInput(WPARAM wParam)

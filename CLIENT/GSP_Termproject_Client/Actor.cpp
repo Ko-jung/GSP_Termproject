@@ -6,7 +6,9 @@
 #include "Manager/MapMgr.h"
 
 CImage Actor::Img;
+CImage Actor::AttackEffectImg;
 std::vector<std::vector<std::vector<std::pair<int, int>>>> Actor::Sprites;
+std::vector<std::pair<int, int>> Actor::AttackSprite;
 std::vector<float> Actor::SprintFrameRate;
 int Actor::ImageSpriteWidth;
 int Actor::ImageSpriteHeight;
@@ -86,35 +88,17 @@ void Actor::Draw(HDC& memdc)
 			BoardWidthSize + WINWIDTH / 2 + DstPosX, BoardHeightSize + WINHEIGHT / 2 + DstPosY };
 	}
 
-	{	// Draw Body
-
-		int SrcX = Sprites[(int)State][(int)Direction][(int)Frame].first;
-		int SrcY = Sprites[(int)State][(int)Direction][(int)Frame].second;
-
-		RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
-		if (Direction != ACTOR_DIRECTION::LEFT)
-		{
-			Img.Draw(memdc, ImageDst, ImageSrc);
-		}
-		else
-		{	// Inversion
-			InversionImage(memdc, ImageDst, ImageSrc);
-		}
+	if (Direction == ACTOR_DIRECTION::UP)
+	{
+		DrawEffect(memdc, ImageDst);
+		DrawArm(memdc, ImageDst);
+		DrawBody(memdc, ImageDst);
 	}
-
-	{	// Draw Arm
-		int SrcX = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].first;
-		int SrcY = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].second;
-	
-		RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
-		if (Direction != ACTOR_DIRECTION::LEFT)
-		{
-			Img.Draw(memdc, ImageDst, ImageSrc);
-		}
-		else
-		{	// Inversion
-			InversionImage(memdc, ImageDst, ImageSrc);
-		}
+	else
+	{
+		DrawBody(memdc, ImageDst);
+		DrawArm(memdc, ImageDst);
+		DrawEffect(memdc, ImageDst);
 	}
 }
 
@@ -175,14 +159,14 @@ void Actor::LoadSprite()
 			TempVector.push_back(TempTempVector);
 		}
 		Sprites.push_back(TempVector);
-		 
+
 		TempVector.clear();
 		for (const auto& i : IndexList)
 		{	// ATTACK
 			std::vector< std::pair<int, int>> TempTempVector;
 			for (int j = 0; j < 6; j++)
 			{
-				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j), ImageSpriteHeight * 4));
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j), ImageSpriteHeight * (4 + i)));
 			}
 			TempVector.push_back(TempTempVector);
 		}
@@ -229,7 +213,7 @@ void Actor::LoadSprite()
 			std::vector< std::pair<int, int>> TempTempVector;
 			for (int j = 0; j < 6; j++)
 			{
-				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j + 12), ImageSpriteHeight * 4));
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j + 12), ImageSpriteHeight * (4 + i)));
 			}
 			TempVector.push_back(TempTempVector);
 		}
@@ -237,6 +221,11 @@ void Actor::LoadSprite()
 	}
 
 	TempVector.clear();
+	AttackEffectImg.Load(TEXT("Image/Player/AttackEffect.png"));
+	for (int i = 0; i < 4; i++)
+	{
+		AttackSprite.emplace_back(std::make_pair(15 * i, 0));
+	}
 }
 
 RECT Actor::GetRectDstWithPos()
@@ -392,10 +381,10 @@ void Actor::InversionImage(HDC& memdc, RECT dstRect, RECT srcImageRect)
 
 void Actor::ChangeState(ACTOR_STATE state)
 {
-	 if (State == state) return;
+	if (State == state) return;
 
-	 State = state;
-	 Frame = 0;
+	State = state;
+	Frame = 0;
 }
 
 
@@ -500,4 +489,62 @@ void Actor::ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP)
 {
 	SetLocation({ SDMOP->x, SDMOP->y });
 	SetDirection((ACTOR_DIRECTION)SDMOP->direction);
+}
+
+void Actor::DrawBody(HDC& memdc, const RECT& ImageDst)
+{
+	// Draw Body
+	int SrcX = Sprites[(int)State][(int)Direction][(int)Frame].first;
+	int SrcY = Sprites[(int)State][(int)Direction][(int)Frame].second;
+
+	RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
+	if (Direction != ACTOR_DIRECTION::LEFT)
+	{
+		Img.Draw(memdc, ImageDst, ImageSrc);
+	}
+	else
+	{	// Inversion
+		InversionImage(memdc, ImageDst, ImageSrc);
+	}
+}
+
+void Actor::DrawArm(HDC& memdc, const RECT& ImageDst)
+{
+	// Draw Arm
+	int SrcX = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].first;
+	int SrcY = Sprites[(int)State + (int)ACTOR_STATE::END][(int)Direction][(int)Frame].second;
+
+	RECT ImageSrc{ SrcX, SrcY, SrcX + ImageSpriteWidth, SrcY + ImageSpriteHeight };
+	if (Direction != ACTOR_DIRECTION::LEFT)
+	{
+		Img.Draw(memdc, ImageDst, ImageSrc);
+	}
+	else
+	{	// Inversion
+		InversionImage(memdc, ImageDst, ImageSrc);
+	}
+}
+
+void Actor::DrawEffect(HDC& memdc, const RECT& ImageDst)
+{
+	int BoardWidthSize = WINWIDTH / BOARDSIZE;
+	int BoardHeightSize = WINHEIGHT / BOARDSIZE;
+	if (State == ACTOR_STATE::ATTACK && Frame > 3.f)
+	{
+		int SrcX = AttackSprite[(int)Direction].first;
+		int SrcY = AttackSprite[(int)Direction].second;
+		RectF AttackBoxDiff[] = {
+			RectF{-0.5f,  1.f,1.5f,2.f},
+			RectF{  1.f, -.5f, 2.f,1.5f},
+			RectF{ -.5f, -1.f,1.5f,0.f},
+			RectF{ -1.f,-0.5f, 0.f,1.5f}
+		};
+
+		RECT a = { WINWIDTH / 2 + AttackBoxDiff[(int)Direction].left * BoardWidthSize,
+					WINHEIGHT / 2 + AttackBoxDiff[(int)Direction].top * BoardWidthSize,
+					WINWIDTH / 2 + AttackBoxDiff[(int)Direction].right * BoardWidthSize,
+					WINHEIGHT / 2 + AttackBoxDiff[(int)Direction].bottom * BoardWidthSize };
+		RECT b = { SrcX, SrcY, SrcX + 15, SrcY + 15 };
+		AttackEffectImg.Draw(memdc, a, b);
+	}
 }

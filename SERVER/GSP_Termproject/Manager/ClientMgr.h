@@ -35,6 +35,8 @@ public:
 	static bool CanSee(const Client* c1, const Client* c2);
 	static bool IsNPC(const Client* Target);
 
+	void ProcessClientDie(Client* Target);
+
 	// From Process Packet
 	void ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c);
 	void ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c);

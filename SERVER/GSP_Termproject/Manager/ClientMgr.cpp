@@ -359,6 +359,15 @@ bool ClientMgr::IsNPC(const Client* Target)
 	return Target->ClientNum >= MAX_USER;
 }
 
+void ClientMgr::ProcessClientDie(Client* Target)
+{
+	if (IsNPC(Target))
+	{
+		int TargetIndex = Target->ClientNum;
+		delete Clients[TargetIndex];
+	}
+}
+
 void ClientMgr::ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c)
 {
 	strcpy_s(c->PlayerName, CLP->name);
@@ -487,5 +496,11 @@ void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c)
 		{
 			if (!IsNPC(pClient)) pClient->SendStatChange(pCollideClient);
 		}
+	}
+
+
+	for (auto& pCollideClient : CollideClient)
+	{
+		if (pCollideClient->CurrentHP <= 0) ProcessClientDie(pCollideClient);
 	}
 }

@@ -46,6 +46,11 @@ public:
 	void ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP);
 
 protected:
+	void DrawBody(HDC& memdc, const RECT& ImageDst);
+	void DrawArm(HDC& memdc, const RECT& ImageDst);
+	void DrawEffect(HDC& memdc, const RECT& ImageDst);
+
+
 	bool IsPossessed;
 	bool IsCanMove;
 
@@ -67,7 +72,9 @@ protected:
 	std::string Name;
 
 	static CImage Img;
+	static CImage AttackEffectImg;
 	static std::vector<std::vector<std::vector<std::pair<int, int>>>> Sprites;
+	static std::vector<std::pair<int, int>> AttackSprite;
 	static std::vector<float> SprintFrameRate;
 	static int ImageSpriteWidth;
 	static int ImageSpriteHeight;

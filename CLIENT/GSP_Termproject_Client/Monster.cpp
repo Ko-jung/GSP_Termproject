@@ -15,7 +15,8 @@ Monster::Monster() :
 	Experience(0),
 	Level(0),
 	State(MONSTER_STATE::IDLE),
-	ShowHpBarTimer(3.f)
+	ShowHpBarTimer(3.f),
+	IsCanRemove(false)
 {
 	if (Img.IsNull())
 		Img.Load(TEXT("Image/Monster/FireMonster.png"));
@@ -44,12 +45,31 @@ void Monster::InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP)
 
 void Monster::Update(float elapsedTime)
 {
-	Frame += elapsedTime * 6.f;
-	if (Frame > Sprites[(int)State][(int)Direction].size())
-		Frame = 0.f;
-
+	UpdateAnim(elapsedTime);
 	if (ShowHpBarTimer > 0.f)
 		ShowHpBarTimer -= elapsedTime;
+}
+
+void Monster::UpdateAnim(float elapsedTime)
+{
+	Frame += elapsedTime * 6.f;
+	if (Frame > Sprites[(int)State][(int)Direction].size())
+	{
+		Frame = 0.f;
+
+		switch (State)
+		{
+		case MONSTER_STATE::IDLE:
+			break;
+		case MONSTER_STATE::DIE:
+			IsCanRemove = true;
+			break;
+		case MONSTER_STATE::END:
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 void Monster::Draw(HDC& memdc)
@@ -122,6 +142,14 @@ void Monster::ApplyDamage(int Damage)
 	CurrentHp -= Damage;
 }
 
+void Monster::ChangeState(MONSTER_STATE state)
+{
+	if (State == state) return;
+
+	State = state;
+	Frame = 0;
+}
+
 void Monster::ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP)
 {
 	Position = { SDMOP->x , SDMOP->y};
@@ -134,6 +162,9 @@ void Monster::ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP)
 	{
 		CurrentHp = SSCP->hp;
 		ShowHpBarTimer = 3.f;
+
+		if (CurrentHp <= 0)
+			ChangeState(MONSTER_STATE::DIE);
 	}
 
 	if (MaxHp != SSCP->max_hp)
