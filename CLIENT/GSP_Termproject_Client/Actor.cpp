@@ -17,11 +17,13 @@ Actor::Actor(bool IsPossess) :
 	IsPossessed(IsPossess),
 	Position(100.f, 100.f),
 	Speed(5.f),
-	State(ACTOR_STATE::ATTACK),
+	State(ACTOR_STATE::IDLE),
 	Direction(ACTOR_DIRECTION::DOWN),
 	KeyInputInfo(0),
 	Frame(0.f),
-	Size(1.f)
+	Size(1.f),
+	IsCanDraw(true),
+	IsCanRemove(false)
 	//ForceX(0),
 	//ForceY(0)
 {
@@ -36,8 +38,13 @@ Actor::Actor(bool IsPossess) :
 
 void Actor::Update(float elapsedTime)
 {
+	if (!IsCanDraw) return;
+
 	UpdateAnim(elapsedTime);
 	Move(elapsedTime);
+
+	if (ShowHpBarTimer > 0.f)
+		ShowHpBarTimer -= elapsedTime;
 }
 
 void Actor::UpdateAnim(float elapsedTime)
@@ -58,6 +65,10 @@ void Actor::UpdateAnim(float elapsedTime)
 			ChangeState(ACTOR_STATE::IDLE);
 			IsCanMove = true;
 			break;
+		case ACTOR_STATE::DIE:
+			IsCanDraw = false;
+			IsCanRemove = true;
+			break;
 		default:
 			break;
 		}
@@ -66,6 +77,8 @@ void Actor::UpdateAnim(float elapsedTime)
 
 void Actor::Draw(HDC& memdc)
 {
+	if (!IsCanDraw) return;
+
 	int BoardWidthSize = WINWIDTH / BOARDSIZE;
 	int BoardHeightSize = WINHEIGHT / BOARDSIZE;
 
@@ -100,10 +113,28 @@ void Actor::Draw(HDC& memdc)
 		DrawArm(memdc, ImageDst);
 		DrawEffect(memdc, ImageDst);
 	}
+
+	if (ShowHpBarTimer > 0.f)
+	{
+		HBRUSH RedBrush = CreateSolidBrush(RGB(255, 0, 0));
+		//Rectangle(memdc, ImageDst.left, ImageDst.top - 10, ImageDst.right, ImageDst.top);
+		HBRUSH WhiteBrush = CreateSolidBrush(RGB(255, 255, 255));
+
+		RECT HpBackgroundRect = { ImageDst.left, ImageDst.top - 10, ImageDst.right, ImageDst.top };
+		RECT HpRect = { ImageDst.left, ImageDst.top - 10,
+			ImageDst.left + (ImageDst.right - ImageDst.left) * ((float)CurrentHp / MaxHp), ImageDst.top };
+
+		FillRect(memdc, &HpBackgroundRect, WhiteBrush);
+		FillRect(memdc, &HpRect, RedBrush);
+
+		DeleteObject(RedBrush);
+		DeleteObject(WhiteBrush);
+	}
 }
 
 void Actor::InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP)
 {
+	IsCanRemove = false;
 	Position.X = SAOP->x;
 	Position.Y = SAOP->y;
 	MaxHp = SAOP->max_hp;
@@ -120,7 +151,7 @@ void Actor::LoadSprite()
 {
 	if (not Sprites.empty()) return;
 
-	SprintFrameRate = { 1.f, 3.f, 3.f, 20.f };
+	SprintFrameRate = { 1.f, 3.f, 3.f, 20.f, 1.f };
 
 	std::vector<int> IndexList{ 0,1,2,1 };
 
@@ -167,6 +198,18 @@ void Actor::LoadSprite()
 			for (int j = 0; j < 6; j++)
 			{
 				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j), ImageSpriteHeight * (4 + i)));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
+
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// DIE
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 2; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j + 4), ImageSpriteHeight * 21));
 			}
 			TempVector.push_back(TempTempVector);
 		}
@@ -218,6 +261,18 @@ void Actor::LoadSprite()
 			TempVector.push_back(TempTempVector);
 		}
 		Sprites.push_back(TempVector);
+
+		TempVector.clear();
+		for (const auto& i : IndexList)
+		{	// DIE
+			std::vector< std::pair<int, int>> TempTempVector;
+			for (int j = 0; j < 2; j++)
+			{
+				TempTempVector.emplace_back(std::make_pair<int, int>(ImageSpriteWidth * (j + 10), ImageSpriteHeight * 21));
+			}
+			TempVector.push_back(TempTempVector);
+		}
+		Sprites.push_back(TempVector);
 	}
 
 	TempVector.clear();
@@ -262,6 +317,7 @@ void Actor::Move(float elapsedTime)
 {
 	// ATTACK etc ....
 	if (!IsCanMove) return;
+	if (!IsPossessed) return;
 
 	POSITION NewPos = Position;
 	MapMgr* MapInstance = MapMgr::Instance();
@@ -383,8 +439,17 @@ void Actor::ChangeState(ACTOR_STATE state)
 {
 	if (State == state) return;
 
+	IsChangeState = true;
 	State = state;
 	Frame = 0;
+}
+
+void Actor::ChangeStateByPacket(ACTOR_STATE state)
+{
+	State = state;
+	Frame = 0;
+
+	//if (State == ACTOR_STATE::ATTACK) ;
 }
 
 
@@ -470,6 +535,7 @@ void Actor::ProcessAttack()
 
 void Actor::ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP)
 {
+	IsCanDraw = true;
 	CurrentHp = SLIP->hp;
 	MaxHp = SLIP->max_hp;
 	Exp = SLIP->exp;
@@ -489,6 +555,37 @@ void Actor::ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP)
 {
 	SetLocation({ SDMOP->x, SDMOP->y });
 	SetDirection((ACTOR_DIRECTION)SDMOP->direction);
+}
+
+void Actor::ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP)
+{
+	if (CurrentHp != SSCP->hp)
+	{
+		CurrentHp = SSCP->hp;
+		ShowHpBarTimer = 3.f;
+
+		if (CurrentHp <= 0)
+			ChangeState(ACTOR_STATE::DIE);
+	}
+
+	if (MaxHp != SSCP->max_hp)
+	{
+		ShowHpBarTimer = 3.f;
+		if (MaxHp > SSCP->max_hp)
+		{
+			MaxHp = SSCP->max_hp;
+			if (CurrentHp > MaxHp) CurrentHp = MaxHp;
+		}
+		else
+		{
+			CurrentHp += (SSCP->max_hp - MaxHp);
+		}
+	}
+
+	{
+		Experience = SSCP->exp;
+		Level = SSCP->level;
+	}
 }
 
 void Actor::DrawBody(HDC& memdc, const RECT& ImageDst)
@@ -533,17 +630,21 @@ void Actor::DrawEffect(HDC& memdc, const RECT& ImageDst)
 	{
 		int SrcX = AttackSprite[(int)Direction].first;
 		int SrcY = AttackSprite[(int)Direction].second;
-		RectF AttackBoxDiff[] = {
+		static RectF AttackBoxDiff[] = {
 			RectF{-0.5f,  1.f,1.5f,2.f},
 			RectF{  1.f, -.5f, 2.f,1.5f},
 			RectF{ -.5f, -1.f,1.5f,0.f},
 			RectF{ -1.f,-0.5f, 0.f,1.5f}
 		};
 
-		RECT a = { WINWIDTH / 2 + AttackBoxDiff[(int)Direction].left * BoardWidthSize,
-					WINHEIGHT / 2 + AttackBoxDiff[(int)Direction].top * BoardWidthSize,
-					WINWIDTH / 2 + AttackBoxDiff[(int)Direction].right * BoardWidthSize,
-					WINHEIGHT / 2 + AttackBoxDiff[(int)Direction].bottom * BoardWidthSize };
+		POSITION OwnActorPos = GamePlayStatic::GetOwnActorPosition();
+		int DstPosX = (Position.X - OwnActorPos.X) * BoardWidthSize;
+		int DstPosY = (Position.Y - OwnActorPos.Y) * BoardHeightSize;
+
+		RECT a = { WINWIDTH / 2 + AttackBoxDiff[(int)Direction].left * BoardWidthSize	  + DstPosX,
+					WINHEIGHT / 2 + AttackBoxDiff[(int)Direction].top * BoardWidthSize	  + DstPosY,
+					WINWIDTH / 2 + AttackBoxDiff[(int)Direction].right * BoardWidthSize	  + DstPosX,
+					WINHEIGHT / 2 + AttackBoxDiff[(int)Direction].bottom * BoardWidthSize + DstPosY };
 		RECT b = { SrcX, SrcY, SrcX + 15, SrcY + 15 };
 		AttackEffectImg.Draw(memdc, a, b);
 	}

@@ -24,6 +24,7 @@ constexpr char CS_ATTACK = 3;			// 4 방향 공격
 constexpr char CS_TELEPORT = 4;			// RANDOM한 위치로 Teleport, Stress Test할 때 Hot Spot현상을 피하기 위해 구현
 constexpr char CS_LOGOUT = 5;			// 클라이언트에서 정상적으로 접속을 종료하는 패킷
 constexpr char CS_8DIRECT_MOVE = 6;
+constexpr char CS_STATE_CHANGE = 7;
 
 constexpr char SC_LOGIN_INFO = 2;
 constexpr char SC_LOGIN_FAIL = 3;
@@ -33,6 +34,7 @@ constexpr char SC_MOVE_OBJECT = 6;
 constexpr char SC_CHAT = 7;
 constexpr char SC_STAT_CHANGE = 8;
 constexpr char SC_8DIRECT_MOVE_OBJECT = 9;
+constexpr char SC_STATE_CHANGE = 10;
 
 constexpr int GAMESERVERPORT = 9000;
 
@@ -86,6 +88,18 @@ struct CS_ATTACK_PACKET : PACKET
 {
 	unsigned char WeaponType;
 	CS_ATTACK_PACKET() : PACKET(CS_ATTACK) { size = sizeof(CS_ATTACK_PACKET); }
+};
+
+struct CS_STATE_CHANGE_PACKET : PACKET
+{
+	unsigned char ChangedState;
+	CS_STATE_CHANGE_PACKET() : PACKET(CS_STATE_CHANGE) { size = sizeof(CS_STATE_CHANGE_PACKET); }
+};
+struct SC_STATE_CHANGE_PACKET : PACKET
+{
+	int id;
+	unsigned char ChangedState;
+	SC_STATE_CHANGE_PACKET() : PACKET(SC_STATE_CHANGE) { size = sizeof(SC_STATE_CHANGE_PACKET); }
 };
 
 struct SC_LOGIN_INFO_PACKET : PACKET {

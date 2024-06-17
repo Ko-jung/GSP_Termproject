@@ -10,6 +10,7 @@ enum class COMP_TYPE : BYTE
 	OP_ACCEPT,
 
 	OP_NPC_MOVE,
+	OP_SPAWN_PLAYER,
 };
 
 enum class KEY_INFO : BYTE
@@ -40,6 +41,7 @@ enum class ACTOR_STATE : BYTE
 	WALK,
 	RUN,
 	ATTACK,
+	DIE,
 	END,
 };
 
@@ -60,7 +62,8 @@ enum class MONSTER_STATE : BYTE
 
 enum class EVENT_TYPE : BYTE
 {
-	EV_RANDOM_MOVE 
+	EV_RANDOM_MOVE,
+	EV_SPAWN_PLAYER,
 };
 
 enum class MOUSE_TYPE : BYTE

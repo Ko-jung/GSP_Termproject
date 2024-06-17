@@ -361,10 +361,52 @@ bool ClientMgr::IsNPC(const Client* Target)
 
 void ClientMgr::ProcessClientDie(Client* Target)
 {
+	SectorMgr::Instance()->Remove(Target);
 	if (IsNPC(Target))
 	{
 		int TargetIndex = Target->ClientNum;
 		delete Clients[TargetIndex];
+	}
+	else
+	{
+		TimerEvent evnt{ Target->ClientNum, std::chrono::system_clock::now() + std::chrono::seconds(5), EVENT_TYPE::EV_SPAWN_PLAYER, 0 };
+		TimerMgr::Instance()->Insert(evnt);
+	}
+}
+
+void ClientMgr::ProcessClientSpawn(int id)
+{
+	Client* Target = Clients[id];
+
+	SC_LOGIN_INFO_PACKET SLIP;
+	SLIP.id = Target->ClientNum;
+	SLIP.x = 100;
+	SLIP.y = 100;
+	SLIP.visual = 0;
+	SLIP.max_hp = SLIP.hp = 100;
+	SLIP.exp = Target->Experience;
+	SLIP.level = Target->Level;
+	Target->Send(&SLIP);
+
+	Target->Position.X = 100;
+	Target->Position.Y = 100;
+	Target->CurrentHP = 100;
+	Target->MaxHP = 100;
+	SectorMgr::Instance()->Insert(Target);
+
+	std::unordered_set<Client*> ViewList;
+	SectorMgr::Instance()->MakeViewList(ViewList, Target);
+	SC_ADD_OBJECT_PACKET SAOP;
+	SAOP.hp = Target->CurrentHP;
+	SAOP.max_hp = Target->MaxHP;
+	SAOP.id = Target->ClientNum;
+	//SAOP.visual = Target->;
+	SAOP.x = Target->Position.X;
+	SAOP.y = Target->Position.Y;
+	strcpy_s(SAOP.name, Target->PlayerName);
+	for (const auto& pClient : ViewList)
+	{
+		pClient->Send(&SAOP);
 	}
 }
 
@@ -483,6 +525,8 @@ void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c)
 		RectF TargetCollisionBox = pClient->GetCollisionFBox();
 		if (CollisionChecker::CollisionCheck(TargetCollisionBox, AttackCollisionBox))
 		{
+			if (pClient->CurrentHP <= 0) continue;
+
 			bool IsDead = pClient->ApplyDamage(c, WeaponDamage);
 			CollideClient.insert(pClient);
 		}
@@ -502,5 +546,19 @@ void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c)
 	for (auto& pCollideClient : CollideClient)
 	{
 		if (pCollideClient->CurrentHP <= 0) ProcessClientDie(pCollideClient);
+	}
+}
+
+void ClientMgr::ProcessStateChange(CS_STATE_CHANGE_PACKET* CSCP, Client* c)
+{
+	std::unordered_set<Client*> ViewList;
+	SectorMgr::Instance()->MakeViewList(ViewList, c);
+
+	SC_STATE_CHANGE_PACKET SSCP;
+	SSCP.ChangedState = CSCP->ChangedState;
+	SSCP.id = c->ClientNum;
+	for (const auto& pClient : ViewList)
+	{
+		pClient->Send(&SSCP);
 	}
 }

@@ -42,6 +42,11 @@ void PacketMgr::ProcessPacket(PACKET* packet, Client* c)
 	{
 		break;
 	}
+	case CS_STATE_CHANGE:
+	{
+		ClientMgr::Instance()->ProcessStateChange(reinterpret_cast<CS_STATE_CHANGE_PACKET*>(packet), c);
+		break;
+	}
 	default:
 		break;
 	}

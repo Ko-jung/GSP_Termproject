@@ -132,6 +132,10 @@ void IOCPServer::Worker()
 				ClientMgr::Instance()->ProcessNPCMove(client_id, Exp);
 				delete Exp;
 				break;
+			case COMP_TYPE::OP_SPAWN_PLAYER:
+				ClientMgr::Instance()->ProcessClientSpawn(client_id);
+				delete Exp;
+				break;
 		default:
 			break;
 		}

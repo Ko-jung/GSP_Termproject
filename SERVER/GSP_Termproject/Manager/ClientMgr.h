@@ -36,6 +36,7 @@ public:
 	static bool IsNPC(const Client* Target);
 
 	void ProcessClientDie(Client* Target);
+	void ProcessClientSpawn(int id);
 
 	// From Process Packet
 	void ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c);
@@ -43,6 +44,7 @@ public:
 	void ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c);
 	void ProcessNPCMove(int id, OverExpansion* exp);
 	void ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c);
+	void ProcessStateChange(CS_STATE_CHANGE_PACKET* CSCP, Client* c);
 
 private:
 	std::array<Client*, MAX_USER + MAX_NPC> Clients;

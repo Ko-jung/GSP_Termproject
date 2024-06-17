@@ -96,29 +96,40 @@ void GameMgr::Update()
 	float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - PrevTime).count() / 1000.f;
 	PrevTime = std::chrono::system_clock::now();
 
-	std::vector<int> RemoveTarget;
+	std::vector<int> RemoveMonsterTarget;
 	for (const auto& a : Monsters)
 	{
 		if (a.second->GetIsCanRemove())
 		{
-			RemoveTarget.push_back(a.first);
+			RemoveMonsterTarget.push_back(a.first);
 			continue;
 		}
 		a.second->Update(elapsedTime);
 	}
+	std::vector<int> RemoveOtherActorsTarget;
 	for (const auto& a : OtherActors)
 	{
+		if (a.second->IsCanRemove)
+		{
+			RemoveOtherActorsTarget.push_back(a.first);
+			continue;
+		}
 		a.second->Update(elapsedTime);
 	}
 
 	OwnActor->Update(elapsedTime);
 
 	SendPosition();
+	SendState();
 
 	// std::cout << OwnActor->GetLocation().X << ", " << OwnActor->GetLocation().Y << std::endl;
-	for (const auto& i : RemoveTarget)
+	for (const auto& i : RemoveMonsterTarget)
 	{
 		Monsters.erase(i);
+	}
+	for (const auto& i : RemoveOtherActorsTarget)
+	{
+		OtherActors.erase(i);
 	}
 }
 
@@ -197,6 +208,16 @@ void GameMgr::SendAttack()
 	Send(&CAP);
 }
 
+void GameMgr::SendState()
+{
+	if (!OwnActor->GetIsChangeState()) return;
+	OwnActor->SetIsChangeState(false);
+
+	CS_STATE_CHANGE_PACKET CSCP;
+	CSCP.ChangedState = (BYTE)OwnActor->GetState();
+	Send(&CSCP);
+}
+
 void GameMgr::ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP)
 {
 	if (SAOP->id < MAX_USER)
@@ -257,11 +278,11 @@ void GameMgr::ProcessStatChange(SC_STAT_CHANGE_PACKET* SSCP)
 {
 	if (SSCP->id == SerialNum)
 	{
-
+		OwnActor->ProcessChangeStat(SSCP);
 	}
 	if (OtherActors.find(SSCP->id) != OtherActors.end())
 	{
-		//OtherActors[SSCP->id]->(SDMOP);
+		OtherActors[SSCP->id]->ProcessChangeStat(SSCP);
 	}
 	else if (Monsters.find(SSCP->id) != Monsters.end())
 	{
@@ -272,6 +293,19 @@ void GameMgr::ProcessStatChange(SC_STAT_CHANGE_PACKET* SSCP)
 		std::cout << "Get SC_STAT_CHANGE_PACKET but id:" << SSCP->id << " is Cant Find!" << std::endl;
 		return;
 	}
+}
+
+void GameMgr::ProcessStateChange(SC_STATE_CHANGE_PACKET* SSCP)
+{
+	if (OtherActors.find(SSCP->id) != OtherActors.end())
+	{
+		OtherActors[SSCP->id]->ChangeStateByPacket((ACTOR_STATE)SSCP->ChangedState);
+	}
+	else
+	{
+		std::cout << "Get SC_STATE_CHANGE_PACKET but id:" << SSCP->id << " is Cant Find!" << std::endl;
+		return;
+		}
 }
 
 void GameMgr::SetOwnActorID(const char* ID)
@@ -329,6 +363,11 @@ void GameMgr::ProcessRecv(PACKET* packet)
 	case SC_8DIRECT_MOVE_OBJECT:
 	{
 		ProcessMoveObject(reinterpret_cast<SC_8DIRECT_MOVE_OBJECT_PACKET*>(packet));
+		break;
+	}
+	case SC_STATE_CHANGE:
+	{
+		ProcessStateChange(reinterpret_cast<SC_STATE_CHANGE_PACKET*>(packet));
 		break;
 	}
 	default:

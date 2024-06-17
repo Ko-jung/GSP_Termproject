@@ -47,11 +47,13 @@ public:
 	void SendLogin();
 	void SendPosition();
 	void SendAttack();
+	void SendState();
 
 	void ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP);
 	void ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP);
 	void ProcessMoveObject(SC_8DIRECT_MOVE_OBJECT_PACKET* SCDMOP);
 	void ProcessStatChange(SC_STAT_CHANGE_PACKET* SSCP);
+	void ProcessStateChange(SC_STATE_CHANGE_PACKET* SSCP);
 
 	SOCKET& GetSocket() { return ServerSocket; }
 	Actor* GetOwnActor() { return OwnActor.get(); }

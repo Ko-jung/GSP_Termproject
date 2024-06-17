@@ -180,9 +180,4 @@ void Monster::ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP)
 			CurrentHp += (SSCP->max_hp - MaxHp);
 		}
 	}
-
-	{
-		Experience = SSCP->exp;
-		Level = SSCP->level;
-	}
 }

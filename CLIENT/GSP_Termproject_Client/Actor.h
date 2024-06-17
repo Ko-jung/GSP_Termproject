@@ -26,6 +26,7 @@ public:
 	void Move(float elapsedTime);
 	void InversionImage(HDC& memdc,RECT dstRect, RECT srcRect);
 	void ChangeState(ACTOR_STATE state);
+	void ChangeStateByPacket(ACTOR_STATE state);
 
 	void ProcessUpInput(WPARAM wParam);
 	void ProcessDownInput(WPARAM wParam);
@@ -33,26 +34,33 @@ public:
 	void SetLocation(POSITION pos) { Position = pos; }
 	void SetName(const char* name) { Name = name; }
 	void SetDirection(ACTOR_DIRECTION direction) { Direction = direction; }
+	void SetIsChangeState(bool b) { IsChangeState = b; }
 
 	POSITION GetLocation() { return Position; }
 	ACTOR_DIRECTION GetDirection() { return Direction; }
 	//char GetKeyInputInfo() { return KeyInputInfo; }
 	const char* GetPlayerName() { return Name.c_str(); }
+	ACTOR_STATE GetState() { return State; }
+	bool GetIsChangeState() { return IsChangeState; }
 
 	void ProcessAttack();
 
 	void ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP);
 	void ProcessMove(SC_MOVE_OBJECT_PACKET* SLIP);
 	void ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP);
+	void ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP);
 
+	bool IsCanRemove;
 protected:
 	void DrawBody(HDC& memdc, const RECT& ImageDst);
 	void DrawArm(HDC& memdc, const RECT& ImageDst);
 	void DrawEffect(HDC& memdc, const RECT& ImageDst);
 
-
+	bool IsCanDraw;
 	bool IsPossessed;
 	bool IsCanMove;
+	bool IsChangeState;
+	float ShowHpBarTimer;
 
 	POSITION Position;
 	float Speed;
@@ -60,6 +68,7 @@ protected:
 	int	MaxHp;
 	int	Exp;
 	int	Level;
+	int Experience;
 	ACTOR_STATE State;
 	ACTOR_DIRECTION Direction;
 	float Frame;

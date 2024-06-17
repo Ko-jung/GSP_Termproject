@@ -11,11 +11,26 @@ void TimerMgr::Pop()
 		// Do Bind Func
 		if (evnt.WakeupTime <= std::chrono::system_clock::now())
 		{
-
 			// case EV_RANDOM_MOVE
+			switch (evnt.EventType)
+			{
+			case EVENT_TYPE::EV_RANDOM_MOVE:
+			{
 			OverExpansion* over = new OverExpansion;
 			over->_comp_type = COMP_TYPE::OP_NPC_MOVE;
-			PostQueuedCompletionStatus(*hIOCP, 1, evnt.IocpID, &over->_over);
+			PostQueuedCompletionStatus(*phIOCP, 1, evnt.IocpID, &over->_over);
+			break;
+			}
+			case EVENT_TYPE::EV_SPAWN_PLAYER:
+			{
+			OverExpansion* over = new OverExpansion;
+			over->_comp_type = COMP_TYPE::OP_SPAWN_PLAYER;
+			PostQueuedCompletionStatus(*phIOCP, 1, evnt.IocpID, &over->_over);
+			break;
+			}
+			default:
+				break;
+			}
 		}
 		else
 		{
