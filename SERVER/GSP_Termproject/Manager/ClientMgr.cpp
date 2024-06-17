@@ -207,9 +207,8 @@ void ClientMgr::SendAddPlayerUseSector(Client* c)
 				if (CLIENT_STATE::INGAME != pClient->State) continue;
 			}
 			if (pClient->ClientNum == c->ClientNum) continue;
-			if (false == CanSee(c, pClient))
-				continue;
-			if (IsNPC(pClient))
+			if (false == CanSee(c, pClient)) continue;
+			if (!IsNPC(pClient))
 				pClient->SendAddPlayer(c);
 			else WakeUpNPC(pClient->ClientNum, c->ClientNum);
 			c->SendAddPlayer(pClient);
@@ -394,8 +393,6 @@ void ClientMgr::ProcessClientSpawn(int id)
 	Target->MaxHP = 100;
 	SectorMgr::Instance()->Insert(Target);
 
-	std::unordered_set<Client*> ViewList;
-	SectorMgr::Instance()->MakeViewList(ViewList, Target);
 	SC_ADD_OBJECT_PACKET SAOP;
 	SAOP.hp = Target->CurrentHP;
 	SAOP.max_hp = Target->MaxHP;
@@ -404,6 +401,9 @@ void ClientMgr::ProcessClientSpawn(int id)
 	SAOP.x = Target->Position.X;
 	SAOP.y = Target->Position.Y;
 	strcpy_s(SAOP.name, Target->PlayerName);
+
+	std::unordered_set<Client*> ViewList;
+	SectorMgr::Instance()->MakeViewList(ViewList, Target);
 	for (const auto& pClient : ViewList)
 	{
 		pClient->Send(&SAOP);
@@ -488,7 +488,6 @@ void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c)
 
 	// Create Collision Box
 	RectF AttackCollisionBox;
-
 	if (CAP->WeaponType == (BYTE)WEAPON_TYPE::SWORD)
 	{
 		WeaponDamage = 40.f;
@@ -538,7 +537,8 @@ void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c)
 	{
 		for (auto& pCollideClient : CollideClient)
 		{
-			if (!IsNPC(pClient)) pClient->SendStatChange(pCollideClient);
+			if (!IsNPC(pClient))
+				pClient->SendStatChange(pCollideClient);
 		}
 	}
 

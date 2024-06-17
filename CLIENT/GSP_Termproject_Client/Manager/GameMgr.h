@@ -43,6 +43,7 @@ public:
 	void ProcessMouseDownInput(LPARAM lParam, MOUSE_TYPE MouseType);
 
 	void DrawBoard(HDC& memdc);
+	void DrawUI(HDC& memdc);
 
 	void SendLogin();
 	void SendPosition();

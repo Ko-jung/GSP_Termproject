@@ -536,6 +536,7 @@ void Actor::ProcessAttack()
 void Actor::ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP)
 {
 	IsCanDraw = true;
+	IsCanMove = true;
 	CurrentHp = SLIP->hp;
 	MaxHp = SLIP->max_hp;
 	Exp = SLIP->exp;
@@ -565,7 +566,10 @@ void Actor::ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP)
 		ShowHpBarTimer = 3.f;
 
 		if (CurrentHp <= 0)
+		{
 			ChangeState(ACTOR_STATE::DIE);
+			IsCanMove = false;
+		}
 	}
 
 	if (MaxHp != SSCP->max_hp)

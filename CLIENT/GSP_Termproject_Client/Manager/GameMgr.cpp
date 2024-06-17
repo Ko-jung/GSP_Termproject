@@ -89,6 +89,8 @@ void GameMgr::Draw(HDC& memdc)
 
 	//Recv();
 	OwnActor->Draw(memdc);
+
+
 }
 
 void GameMgr::Update()
@@ -178,9 +180,12 @@ void GameMgr::ProcessMouseDownInput(LPARAM lParam, MOUSE_TYPE MouseType)
 void GameMgr::DrawBoard(HDC& memdc)
 {
 	POSITION pos = OwnActor->GetLocation();
-	//std::cout << X << ", " << Y << std::endl;
-
 	MapMgr::Instance()->Draw(memdc, pos);
+}
+
+void GameMgr::DrawUI(HDC& memdc)
+{
+
 }
 
 void GameMgr::SendLogin()
@@ -280,7 +285,7 @@ void GameMgr::ProcessStatChange(SC_STAT_CHANGE_PACKET* SSCP)
 	{
 		OwnActor->ProcessChangeStat(SSCP);
 	}
-	if (OtherActors.find(SSCP->id) != OtherActors.end())
+	else if (OtherActors.find(SSCP->id) != OtherActors.end())
 	{
 		OtherActors[SSCP->id]->ProcessChangeStat(SSCP);
 	}
