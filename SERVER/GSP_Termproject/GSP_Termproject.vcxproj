@@ -137,6 +137,7 @@
     <ClCompile Include="Manager\MapMgr.cpp" />
     <ClCompile Include="Manager\PacketMgr.cpp" />
     <ClCompile Include="Manager\SectorMgr.cpp" />
+    <ClCompile Include="Manager\TimerMgr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\EnumDef.h" />
@@ -152,6 +153,7 @@
     <ClInclude Include="Manager\MapMgr.h" />
     <ClInclude Include="Manager\PacketMgr.h" />
     <ClInclude Include="Manager\SectorMgr.h" />
+    <ClInclude Include="Manager\TimerMgr.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -8,6 +8,8 @@ enum class COMP_TYPE : BYTE
 	OP_RECV,
 	OP_SEND,
 	OP_ACCEPT,
+
+	OP_NPC_MOVE,
 };
 
 enum class KEY_INFO : BYTE
@@ -53,4 +55,9 @@ enum class MONSTER_STATE : BYTE
 	IDLE,
 	DIE,
 	END,
+};
+
+enum EVENT_TYPE : BYTE
+{
+	EV_RANDOM_MOVE 
 };

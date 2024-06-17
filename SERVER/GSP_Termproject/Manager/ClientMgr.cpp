@@ -5,6 +5,7 @@
 
 #include "MapMgr.h"
 #include "SectorMgr.h"
+#include "TimerMgr.h"
 
 #include <atomic>
 
@@ -118,8 +119,8 @@ void ClientMgr::MapCollisionCheck(int id)
 
 void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 {
-	int	CurrSectorXPos = c->Position.X / SECTORSIZE;
-	int CurrSectorYPos = c->Position.Y / SECTORSIZE;
+	int	CurrSectorXPos = (int)c->Position.X / SECTORSIZE;
+	int CurrSectorYPos = (int)c->Position.Y / SECTORSIZE;
 	std::unordered_set<Client*> new_vl;
 	// 0, 0 -> 2, 2 까지 9섹터 검색 8,9
 	for (int i = 0; i < 9; i++)
@@ -155,7 +156,8 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 		if (!IsNPC(pClient))
 		{
 			pClient->ViewListLock.lock();
-			if (pClient->ViewList.count(c)) {
+			if (pClient->ViewList.count(c))
+			{
 				pClient->ViewListLock.unlock();
 				pClient->SendMovePos(c);
 			}
@@ -164,18 +166,23 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 				pClient->SendAddPlayer(c);
 			}
 		}
-		//else WakeUpNPC(pl, c_id);
+		else WakeUpNPC(pClient->ClientNum, c->ClientNum);
 
 		if (OldTargetViewList.count(pClient) == 0)
+		{
 			c->SendAddPlayer(pClient);
+		}
 	}
 
 	for (auto& pClient : OldTargetViewList)
-		if (0 == new_vl.count(pClient)) {
+	{
+		if (0 == new_vl.count(pClient))
+		{
 			c->SendRemovePlayer(pClient);
 			if (!IsNPC(pClient))
 				pClient->SendRemovePlayer(c);
 		}
+	}
 }
 
 void ClientMgr::SendAddPlayerUseSector(Client* c)
@@ -202,11 +209,142 @@ void ClientMgr::SendAddPlayerUseSector(Client* c)
 				continue;
 			if (IsNPC(pClient))
 				pClient->SendAddPlayer(c);
-			//else WakeUpNPC(pClient->ClientNum, c->ClientNum);
+			else WakeUpNPC(pClient->ClientNum, c->ClientNum);
 			c->SendAddPlayer(pClient);
 		}
 		sector->SectorLock.unlock();
 	}
+}
+
+void ClientMgr::NPCRandomMove(Client* NPC)
+{
+	std::cout << "NPCRandomMove Called Npc ClientNum is " << NPC->ClientNum << std::endl;
+	// 1. make OldViewList
+	std::unordered_set<Client*> OldViewList;
+	SectorMgr::Instance()->MakeViewList(OldViewList, NPC);
+	//std::unordered_set<int> OldViewList;
+	//for (int i = 0; i < 9; i++)
+	//{
+	//	int Y = NPC->Position.Y / SECTORSIZE + i / 3 - 1;
+	//	int X = NPC->Position.X / SECTORSIZE + i % 3 - 1;
+	//
+	//	if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
+	//
+	//	Sector* sector = SectorMgr::Instance()->GetSector(X, Y);
+	//	sector->SectorLock.lock();
+	//	for (auto& pClient : sector->SectorClient)
+	//	{
+	//		if (pClient->ClientNum == NPC->ClientNum) continue;
+	//		if (IsNPC(pClient)) continue;
+	//		if (CanSee(pClient, NPC))
+	//		{
+	//			OldViewList.insert(pClient->ClientNum);
+	//		}
+	//	}
+	//	sector->SectorLock.lock();
+	//}
+
+	// 2. Move Random NPC Pos
+	int	x = NPC->Position.X;
+	int y = NPC->Position.Y;
+	int PrevSectorXPos = x / SECTORSIZE;
+	int PrevSectorYPos = y / SECTORSIZE;
+	int MoveDirect = rand() % 4;
+	switch (MoveDirect)
+	{
+	case 0: if (x < (W_WIDTH - 1)) x++; break;
+	case 1: if (x > 0) x--; break;
+	case 2: if (y < (W_HEIGHT - 1)) y++; break;
+	case 3:if (y > 0) y--; break;
+	}
+	if ((MAP_INFO)MapMgr::Instance()->GetMapInfo(x, y) == MAP_INFO::WALLS_BLOCK)
+	{
+		switch (MoveDirect)
+		{
+		case 0: if (x < (W_WIDTH - 1)) x--; break;
+		case 1: if (x > 0) x++; break;
+		case 2: if (y < (W_HEIGHT - 1)) y--; break;
+		case 3:if (y > 0) y++; break;
+		}
+	}
+	int CurrSectorXPos = x / SECTORSIZE;
+	int CurrSectorYPos = y / SECTORSIZE;
+
+	NPC->Position.X = x;
+	NPC->Position.Y = y;
+
+	// moved
+	// if (x != NPC->Position.X || x != NPC->Position.Y)
+	// {
+	// 	NPC->Position.X = x;
+	// 	NPC->Position.Y = y;
+	// 	// no data race
+	// 	if (NPC->_move_count > 0)
+	// 	{
+	// 		if (--NPC->_move_count == 0)
+	// 		{
+	// 			NPC->_ll.lock();
+	// 			lua_getglobal(NPC->_L, "event_say_bye");
+	// 			lua_pushnumber(NPC->_L, NPC->_target_obj);
+	// 			lua_pcall(NPC->_L, 1, 0, 0);
+	// 			NPC->_ll.unlock();
+	// 		}
+	// 
+	// 	}
+	// }
+
+	// 2-2. Checking SECTOR
+	SectorMgr::Instance()->MoveSector(NPC, PrevSectorXPos, PrevSectorYPos);
+
+	// 3. Make NewViewList
+	 std::unordered_set<Client*> NewViewList;
+	 SectorMgr::Instance()->MakeViewList(NewViewList, NPC);
+	 
+	 // 4. Sending
+	 for (auto pClient : NewViewList)
+	 {
+	 	if (0 == OldViewList.count(pClient))
+		{
+	 		pClient->SendAddPlayer(NPC);
+	 	}
+	 	else
+		{
+	 		pClient->SendMovePos(NPC);
+	 	}
+	 }
+
+	 for (auto pClient : OldViewList)
+	 {
+	 	if (0 == NewViewList.count(pClient))
+		{
+	 		pClient->ViewListLock.lock();
+	 		if (0 != pClient->ViewList.count(NPC))
+			{
+	 			pClient->ViewListLock.unlock();
+	 			pClient->SendRemovePlayer(NPC);
+	 		}
+	 		else {
+	 			pClient->ViewListLock.unlock();
+	 		}
+	 	}
+	 }
+}
+
+void ClientMgr::WakeUpNPC(int NpcID, int WakerID)
+{
+	//OverExpansion* exover = new OverExpansion;
+	//exover->_comp_type = COMP_TYPE::OP_AI_HELLO;
+	//exover->_ai_target_obj = waker;
+
+	//if (clients[npc_id].x == clients[waker].x && clients[npc_id].y == clients[waker].y)
+	//	PostQueuedCompletionStatus(h_iocp, 1, npc_id, &exover->_over);
+	Client* NPC = Clients[NpcID];
+	if (NPC->IsActive) return;
+	bool old_state = false;
+	if (false == std::atomic_compare_exchange_strong(&NPC->IsActive, &old_state, true))
+		return;
+	TimerEvent evnt{ NpcID, std::chrono::system_clock::now(), EV_RANDOM_MOVE, 0 };
+	TimerMgr::Instance()->Insert(evnt);
 }
 
 bool ClientMgr::CanSee(const Client* c1, const Client* c2)
@@ -248,4 +386,42 @@ void ClientMgr::ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c)
 {
 	c->Move(CMP->Position, CMP->direction);
 	SendPosToOtherClientUseSector(c);
+}
+
+void ClientMgr::ProcessNPCMove(int id, OverExpansion* exp)
+{
+	Client* NPC = Clients[id];
+	bool KeepAlive = false;
+
+	for (int i = 0; i < 9; i++)
+	{
+		int Y = (NPC->Position.Y / SECTORSIZE) + i / 3 - 1;
+		int X = (NPC->Position.X / SECTORSIZE) + i % 3 - 1;
+
+		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
+
+		Sector* sector = SectorMgr::Instance()->GetSector(X,Y);
+		sector->SectorLock.lock();
+		for (auto& pClient : sector->SectorClient)
+		{
+			if (pClient->State == CLIENT_STATE::INGAME && CanSee(NPC, pClient))
+			{
+				KeepAlive = true;
+				i = 9;
+				break;
+			}
+		}
+		sector->SectorLock.unlock();
+	}
+
+		if (KeepAlive)
+		{
+			NPCRandomMove(NPC);
+			TimerEvent evnt{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EV_RANDOM_MOVE, 0 };
+			TimerMgr::Instance()->Insert(evnt);
+		}
+		else
+		{
+			NPC->IsActive = false;
+		}
 }

@@ -18,6 +18,8 @@ public:
 	void Draw(HDC& memdc);
 	void LoadSprite();
 
+	void ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP);
+
 	POSITION Position;
 	int	CurrentHp;
 	int	MaxHp;

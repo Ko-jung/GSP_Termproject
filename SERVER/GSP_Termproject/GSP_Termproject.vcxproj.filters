@@ -48,6 +48,9 @@
     <ClCompile Include="Manager\SectorMgr.cpp">
       <Filter>Manager</Filter>
     </ClCompile>
+    <ClCompile Include="Manager\TimerMgr.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -91,6 +94,9 @@
     </ClInclude>
     <ClInclude Include="Manager\MapMgr.h">
       <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="Manager\TimerMgr.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

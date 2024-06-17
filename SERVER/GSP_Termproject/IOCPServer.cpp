@@ -9,6 +9,7 @@
 #include "Manager/ClientMgr.h"
 #include "Manager/MapMgr.h"
 #include "Manager/SectorMgr.h"
+#include "Manager/TimerMgr.h"
 
 #include "Client.h"
 
@@ -77,10 +78,13 @@ bool IOCPServer::BindListen(const int PortNum)
 void IOCPServer::StartServer()
 {
 	ClientMgr::Instance()->InitNPC();
+	TimerMgr::Instance()->SetIOCP(&hIocp);
+
 	for (int i = 0; i < WorkerNum; i++)
 	{
 		WorkerThreads.emplace_back([this]() { Worker(); });
 	}
+	TimerThread = std::thread{ &IOCPServer::Timer, this };
 }
 
 void IOCPServer::Worker()
@@ -109,8 +113,8 @@ void IOCPServer::Worker()
 
 		if (0 == num_byte)
 		{
-			// if (Exp->_comp_op == COMP_OP::OP_SEND || Exp->_comp_op == COMP_OP::OP_RECV)
-			// 	ClientMgr::Instance()->Disconnect(client_id);
+			if (Exp->_comp_type == COMP_TYPE::OP_SEND || Exp->_comp_type == COMP_TYPE::OP_RECV)
+			 	ClientMgr::Instance()->Disconnect(client_id);
 		}
 
 		switch (Exp->_comp_type)
@@ -124,9 +128,22 @@ void IOCPServer::Worker()
 			case COMP_TYPE::OP_SEND:
 				delete Exp;
 				break;
+			case COMP_TYPE::OP_NPC_MOVE:
+				ClientMgr::Instance()->ProcessNPCMove(client_id, Exp);
+				delete Exp;
+				break;
 		default:
 			break;
 		}
+	}
+}
+
+void IOCPServer::Timer()
+{
+	TimerMgr* TimerInstance = TimerMgr::Instance();
+	while (true)
+	{
+		TimerInstance->Pop();
 	}
 }
 

@@ -28,6 +28,7 @@ public:
 	void SendAddPlayer(Client* c);
 	void SendRemovePlayer(Client* c);
 
+	std::atomic_bool IsActive;
 	int ClientNum;
 	SOCKET Socket;
 	OverExpansion Exp;

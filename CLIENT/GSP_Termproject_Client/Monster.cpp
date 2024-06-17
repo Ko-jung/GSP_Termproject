@@ -90,3 +90,9 @@ void Monster::LoadSprite()
 	TempVector.push_back(TempTempVector);
 	Sprites.push_back(TempVector);
 }
+
+void Monster::ProcessMove(SC_8DIRECT_MOVE_OBJECT_PACKET* SDMOP)
+{
+	Position = { SDMOP->x , SDMOP->y};
+	Direction = (ACTOR_DIRECTION)SDMOP->direction;
+}

@@ -241,13 +241,20 @@ void GameMgr::ProcessRecv(PACKET* packet)
 		else
 		{
 			Actor* TargetActor = nullptr;
-			if (OtherActors.find(SDMOP->id) == OtherActors.end())
+			if (OtherActors.find(SDMOP->id) != OtherActors.end())
+			{
+				OtherActors[SDMOP->id]->ProcessMove(SDMOP);
+			}
+			else if (Monsters.find(SDMOP->id) != Monsters.end())
+			{
+				Monsters[SDMOP->id]->ProcessMove(SDMOP);
+			}
+			else
 			{
 				std::cout << "Get SC_8DIRECT_MOVE_OBJECT_PACKET but id:" << SDMOP->id << " is Cant Find!" << std::endl;
 				return;
 			}
 
-			OtherActors[SDMOP->id]->ProcessMove(SDMOP);
 		}
 		
 		break;

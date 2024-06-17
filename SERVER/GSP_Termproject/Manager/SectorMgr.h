@@ -27,6 +27,8 @@ public:
 
 	Sector* GetSector(int x, int y) { return &Sectors[y][x]; }
 
+	void MakeViewList(std::unordered_set<Client*>& ViewList, Client* Center);
+
 private:
 	std::array<std::array<Sector, W_WIDTH / SECTORSIZE + 1>, W_HEIGHT / SECTORSIZE + 1> Sectors;
 

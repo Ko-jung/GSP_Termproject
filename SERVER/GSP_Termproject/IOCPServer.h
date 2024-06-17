@@ -12,6 +12,7 @@ public:
 
 	void StartServer();
 	void Worker();
+	void Timer();
 	void ThreadJoin();
 	void Disconnect(int Id);
 
@@ -24,6 +25,7 @@ public:
 	class OverExpansion* AcceptExpOver;
 
 	std::vector<std::thread> WorkerThreads;
+	std::thread TimerThread;
 
 	int WorkerNum;
 };

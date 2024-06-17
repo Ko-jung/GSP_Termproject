@@ -16,6 +16,7 @@ int Client::MonsterImageSpriteWidth;
 int Client::MonsterImageSpriteHeight;
 
 Client::Client() :
+	IsActive(false),
 	ClientNum(-1),
 	RemainDataLen(0),
 	Speed(0.7f),
@@ -132,25 +133,25 @@ void Client::Move(POSITION NewPos, char direction)
 	MapMgr* Instance = MapMgr::Instance();
 	bool IsRollBacked = false;
 
-	int PrevSectorXPos = Position.X / SECTORSIZE;
-	int PrevSectorYPos = Position.Y / SECTORSIZE;
-	int CurrSectorXPos = NewPos.X / SECTORSIZE;
-	int CurrSectorYPos = NewPos.Y / SECTORSIZE;
+	int PrevSectorXPos = (int)Position.X / SECTORSIZE;
+	int PrevSectorYPos = (int)Position.Y / SECTORSIZE;
+	int CurrSectorXPos = (int)NewPos.X / SECTORSIZE;
+	int CurrSectorYPos = (int)NewPos.Y / SECTORSIZE;
 
 	this->Direction = (ACTOR_DIRECTION)direction;
 
 	float NewPosRight = NewPos.X + (float)ImageSpriteWidth / BOARDSIZE * Size;
 	float NewPosBottom = NewPos.Y + (float)ImageSpriteHeight / BOARDSIZE * Size;
 
-	if ((Instance->GetMapInfo(NewPosRight, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK) ||
-		(Instance->GetMapInfo(NewPos.X, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
+	if ((Instance->GetMapInfo((int)NewPosRight, (int)NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK) ||
+		(Instance->GetMapInfo((int)NewPos.X, (int)NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
 	{
 		NewPos.X = Position.X;
 		IsRollBacked = true;
 	}
 
-	if ((Instance->GetMapInfo(NewPos.X, NewPosBottom) == (WORD)MAP_INFO::WALLS_BLOCK) ||
-		(Instance->GetMapInfo(NewPos.X, NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
+	if ((Instance->GetMapInfo((int)NewPos.X, (int)NewPosBottom) == (WORD)MAP_INFO::WALLS_BLOCK) ||
+		(Instance->GetMapInfo((int)NewPos.X, (int)NewPos.Y) == (WORD)MAP_INFO::WALLS_BLOCK))
 	{
 		NewPos.Y = Position.Y;
 		IsRollBacked = true;
@@ -171,10 +172,10 @@ void Client::Move(POSITION NewPos, char direction)
 RECT Client::GetCollisionBox()
 {
 	RECT ReturnRect;
-	ReturnRect.left = Position.X;
-	ReturnRect.top = Position.Y;
-	ReturnRect.right = Position.X + Size * ImageSpriteWidth;
-	ReturnRect.bottom = Position.Y + Size * ImageSpriteHeight;
+	ReturnRect.left = (LONG)Position.X;
+	ReturnRect.top = (LONG)Position.Y;
+	ReturnRect.right = (LONG)Position.X +  (LONG)Size * ImageSpriteWidth;
+	ReturnRect.bottom = (LONG)Position.Y + (LONG)Size * ImageSpriteHeight;
 
 	return ReturnRect;
 }
@@ -183,8 +184,10 @@ void Client::SendLoginInfo()
 {
 	SC_LOGIN_INFO_PACKET SLIP;
 	SLIP.id = ClientNum;
-	SLIP.x = Position.X = 100.f;
-	SLIP.y = Position.Y = 100.f;
+	SLIP.x = 100;
+	SLIP.y = 100;
+	Position.X = 100;
+	Position.Y = 100;
 	SLIP.visual = 0;
 	SLIP.max_hp = SLIP.hp = 100;
 	SLIP.exp = 0;
@@ -196,8 +199,8 @@ void Client::SendStressTestMovePos()
 {
 	SC_MOVE_OBJECT_PACKET SMOP;
 	SMOP.id = ClientNum;
-	SMOP.x = (short)Position.X;
-	SMOP.y = (short)Position.Y;
+	SMOP.x = (short)(LONG)Position.X;
+	SMOP.y = (short)(LONG)Position.Y;
 	SMOP.move_time = LastMoveTime;
 	Send(&SMOP);
 }
@@ -221,8 +224,8 @@ void Client::SendAddPlayer(Client* c)
 	strcpy_s(SAOP.name, c->PlayerName);
 	SAOP.size = sizeof(SAOP);
 	SAOP.type = SC_ADD_OBJECT;
-	SAOP.x = c->Position.X;
-	SAOP.y = c->Position.Y;
+	SAOP.x = (short)c->Position.X;
+	SAOP.y = (short)c->Position.Y;
 
 	ViewListLock.lock();
 	ViewList.insert(c);

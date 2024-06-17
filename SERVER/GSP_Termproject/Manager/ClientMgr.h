@@ -28,14 +28,17 @@ public:
 
 	void SendPosToOtherClientUseSector(Client* c);
 	void SendAddPlayerUseSector(Client* c);
+	void NPCRandomMove(Client* NPC);
+	void WakeUpNPC(int npc_id, int waker);
 	
-	bool CanSee(const Client* c1, const Client* c2);
-	bool IsNPC(const Client* Target);
+	static bool CanSee(const Client* c1, const Client* c2);
+	static bool IsNPC(const Client* Target);
 
 	// From Process Packet
 	void ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c);
 	void ProcessStressTestMove(CS_MOVE_PACKET* CMP, Client* c);
 	void ProcessMove(CS_8DIRECT_MOVE_PACKET* CMP, Client* c);
+	void ProcessNPCMove(int id, OverExpansion* exp);
 
 private:
 	std::array<Client*, MAX_USER + MAX_NPC> Clients;
