@@ -45,16 +45,21 @@ public:
 	void DrawBoard(HDC& memdc);
 	void DrawUI(HDC& memdc);
 
+	void OnSystemMessage(const std::string mess);
+	void InputChat(WPARAM wParam);
+
 	void SendLogin();
 	void SendPosition();
 	void SendAttack();
 	void SendState();
+	void SendChat();
 
 	void ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP);
 	void ProcessRemoveObject(SC_REMOVE_OBJECT_PACKET* SROP);
 	void ProcessMoveObject(SC_8DIRECT_MOVE_OBJECT_PACKET* SCDMOP);
 	void ProcessStatChange(SC_STAT_CHANGE_PACKET* SSCP);
 	void ProcessStateChange(SC_STATE_CHANGE_PACKET* SSCP);
+	void ProcessChat(SC_CHAT_PACKET* SCP);
 
 	SOCKET& GetSocket() { return ServerSocket; }
 	Actor* GetOwnActor() { return OwnActor.get(); }
@@ -66,7 +71,15 @@ protected:
 	//std::vector<bool> KeyInputInfo;
 	float FPS;
 	float ElapsedTime;
-	
+	float SystemMessageTimer;
+	std::string SystemText;
+
+	float ChatBoxTimer;
+	std::vector<std::string> Chats;
+
+	bool IsChatInputMode;
+	std::string NowChat;
+
 	std::shared_ptr<Actor> OwnActor;
 	int SerialNum;
 
@@ -74,6 +87,7 @@ protected:
 	std::unordered_map<int, std::shared_ptr<class Monster>> Monsters;
 
 	CImage WorldImageTile;
+	CImage ChatBoxImage;
 
 	std::chrono::system_clock::time_point PrevTime;
 

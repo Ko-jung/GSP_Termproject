@@ -5,15 +5,15 @@ void MapMgr::Init()
 	WorldImageTile.Load(TEXT("Image/Map/MapImage.png"));
 
 	CImage WorldImage;
-	WorldImage.Load(TEXT("../../Common/Image/MiniWorldMapTile.png"));
+	WorldImage.Load(TEXT("../../Common/Image/WorldMapTile.png"));
 	//WorldImageTile.Load(TEXT("../../Common/Image/WorldMapTile.png"));
 
 	int Width = WorldImage.GetWidth();
 	int Height = WorldImage.GetHeight();
 
-	for (int i = 0; i < Height; i++)
-	{
 		for (int j = 0; j < Width; j++)
+	{
+	for (int i = 0; i < Height; i++)
 		{
 			COLORREF PixelColor = WorldImage.GetPixel(i, j);
 			int Red = GetRValue(PixelColor);
@@ -22,7 +22,7 @@ void MapMgr::Init()
 
 			if (Red == 0 && Green == 0 && Blue == 0)
 			{
-				WorldMap[i][j] = (BYTE)MAP_INFO::WALLS_BLOCK;
+				WorldMap[j][i] = (BYTE)MAP_INFO::WALLS_BLOCK;
 			}
 			else if (Red == 255 && Green == 0 && Blue == 0)
 			{
@@ -30,11 +30,11 @@ void MapMgr::Init()
 			}
 			else if (Red == 0 && Green == 255 && Blue == 0)
 			{
-				WorldMap[i][j] = (BYTE)MAP_INFO::GROUND_EMPTY;
+				WorldMap[j][i] = (BYTE)MAP_INFO::GROUND_EMPTY;
 			}
 			else if (Red == 0 && Green == 0 && Blue == 255)
 			{
-				WorldMap[i][j] = (BYTE)MAP_INFO::GROUND_EMPTY;
+				WorldMap[j][i] = (BYTE)MAP_INFO::GROUND_EMPTY;
 			}
 		}
 	}

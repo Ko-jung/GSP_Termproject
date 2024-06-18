@@ -6,6 +6,7 @@
 #include "MapMgr.h"
 #include "SectorMgr.h"
 #include "TimerMgr.h"
+#include "DBMgr.h"
 
 #include "../CollisionChecker.h"
 
@@ -33,10 +34,11 @@ void ClientMgr::InitNPC()
 	std::cout << "InitNPC begin.\n";
 	for (int i = MAX_USER; i < Clients.size(); i++)
 	{
+		auto Pos = MapMgr::Instance()->GetRandomCanSpawnPos();
 		Clients[i] = new Client();
 		Clients[i]->ClientNum = i;
 		sprintf_s(Clients[i]->PlayerName, "NPC%d", i);
-		Clients[i]->Position = { (float)(rand() % 200), (float)(rand() % 200) };
+		Clients[i]->Position = { (float)Pos.first, (float)Pos.second };// { (float)(rand() % 200), (float)(rand() % 200) };
 		Clients[i]->Direction = ACTOR_DIRECTION::DOWN;
 		Clients[i]->State = CLIENT_STATE::INGAME;
 
@@ -412,14 +414,22 @@ void ClientMgr::ProcessClientSpawn(int id)
 
 void ClientMgr::ProcessLogin(CS_LOGIN_PACKET* CLP, Client* c)
 {
+	WCHAR query[100];
+	SC_LOGIN_INFO_PACKET SLIP;
+
+	bool Succ = DBMgr::Instance()->ExecLogin(L"SELECT ID, X, Y, Visual, Level, Hp, MaxHp, Exp FROM [GSP_Termproject].[dbo].[GSP_Termproject_Player]",
+		CLP->name, SLIP);
+
 	strcpy_s(c->PlayerName, CLP->name);
 	{
 		std::lock_guard<std::mutex> ll{ c->StateMutex };
-		c->Position.X = 100.f;//rand() % W_WIDTH;
-		c->Position.Y = 100.f;//rand() % W_HEIGHT;
 		c->State = CLIENT_STATE::INGAME;
 	}
-	c->SendLoginInfo();
+	if(Succ)
+		c->SendLoginInfo(&SLIP);
+	else
+		c->SendLoginInfo();
+
 
 	// ADD SECTOR
 	SectorMgr::Instance()->Insert(c);
@@ -466,16 +476,16 @@ void ClientMgr::ProcessNPCMove(int id, OverExpansion* exp)
 		sector->SectorLock.unlock();
 	}
 
-		if (KeepAlive)
-		{
-			NPCRandomMove(NPC);
-			TimerEvent evnt{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
-			TimerMgr::Instance()->Insert(evnt);
-		}
-		else
-		{
-			NPC->IsActive = false;
-		}
+	if (KeepAlive)
+	{
+		NPCRandomMove(NPC);
+		TimerEvent evnt{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
+		TimerMgr::Instance()->Insert(evnt);
+	}
+	else
+	{
+		NPC->IsActive = false;
+	}
 }
 
 void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c)
@@ -560,5 +570,20 @@ void ClientMgr::ProcessStateChange(CS_STATE_CHANGE_PACKET* CSCP, Client* c)
 	for (const auto& pClient : ViewList)
 	{
 		pClient->Send(&SSCP);
+	}
+}
+
+void ClientMgr::ProcessChat(CS_CHAT_PACKET* CCP, Client* c)
+{
+	std::unordered_set<Client*> ViewList;
+	SectorMgr::Instance()->MakeViewList(ViewList, c);
+
+	SC_CHAT_PACKET SCP;
+	SCP.id = c->ClientNum;
+	strcpy_s(SCP.mess, CCP->mess);
+	ViewList.insert(c);
+	for (const auto& pClient : ViewList)
+	{
+		pClient->Send(&SCP);
 	}
 }

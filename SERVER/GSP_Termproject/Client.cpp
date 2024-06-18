@@ -199,17 +199,26 @@ RectF Client::GetCollisionFBox()
 
 void Client::SendLoginInfo()
 {
+	std::pair<WORD, WORD> Pos = MapMgr::Instance()->GetRandomCanSpawnPos();
 	SC_LOGIN_INFO_PACKET SLIP;
 	SLIP.id = ClientNum;
-	SLIP.x = 100;
-	SLIP.y = 100;
-	Position.X = 100;
-	Position.Y = 100;
+	SLIP.x = Pos.first;
+	SLIP.y = Pos.second;
+	Position.X = Pos.first;
+	Position.Y = Pos.second;
 	SLIP.visual = 0;
 	SLIP.max_hp = SLIP.hp = 100;
 	SLIP.exp = 0;
 	SLIP.level = 1;
 	Send(&SLIP);
+}
+
+void Client::SendLoginInfo(SC_LOGIN_INFO_PACKET* SLIP)
+{
+	Position.X = SLIP->x;
+	Position.Y = SLIP->y;
+	SLIP->id = ClientNum;
+	Send(SLIP);
 }
 
 void Client::SendStressTestMovePos()

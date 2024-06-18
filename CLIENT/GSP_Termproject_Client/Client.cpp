@@ -214,7 +214,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
     {
         AdjustWindowRect(&WindowSize, WS_OVERLAPPEDWINDOW, false);
-        MoveWindow(hWnd, 150, 70, WindowSize.right - WindowSize.left, WindowSize.bottom - WindowSize.top, false);
+        MoveWindow(hWnd, 150, 70, WindowSize.right - WindowSize.left, WindowSize.bottom - WindowSize.top + 20, false);
 
         Game = GameMgr::Instance();
 

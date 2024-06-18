@@ -27,6 +27,7 @@ void PacketMgr::ProcessPacket(PACKET* packet, Client* c)
 	}
 	case CS_CHAT:
 	{
+		ClientMgr::Instance()->ProcessChat(reinterpret_cast<CS_CHAT_PACKET*>(packet), c);
 		break;
 	}
 	case CS_ATTACK:

@@ -14,6 +14,7 @@
 #include "MapMgr.h"
 
 #include "../Monster.h"
+#include "../GamePlayStatic.h"
 
 void CALLBACK recv_callback(DWORD errors, DWORD r_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
 void CALLBACK send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p_wsaover, DWORD recv_flag);
@@ -21,7 +22,10 @@ void CALLBACK send_callback(DWORD errors, DWORD transfer_size, LPWSAOVERLAPPED p
 GameMgr::GameMgr() :
 	ElapsedTime(0.f),
 	SerialNum(-1),
-	RemainDataLen(0)
+	RemainDataLen(0),
+	SystemMessageTimer(10.f),
+	ChatBoxTimer(10.f),
+	IsChatInputMode(false)
 {
 	OwnActor = std::make_shared<Actor>();
 
@@ -32,6 +36,13 @@ GameMgr::GameMgr() :
 	MapMgr::Instance()->Init();
 
 	FPS = 30.f;
+
+	ChatBoxImage.Load(TEXT("Image/UI/ChatBox.png"));
+
+	Chats.emplace_back("ABCD");
+	Chats.emplace_back("41D");
+	Chats.emplace_back("A16151CD");
+	Chats.emplace_back("A1231231CD");
 }
 
 GameMgr::~GameMgr()
@@ -90,7 +101,7 @@ void GameMgr::Draw(HDC& memdc)
 	//Recv();
 	OwnActor->Draw(memdc);
 
-
+	DrawUI(memdc);
 }
 
 void GameMgr::Update()
@@ -124,7 +135,7 @@ void GameMgr::Update()
 	SendPosition();
 	SendState();
 
-	// std::cout << OwnActor->GetLocation().X << ", " << OwnActor->GetLocation().Y << std::endl;
+	 std::cout << OwnActor->GetLocation().X << ", " << OwnActor->GetLocation().Y << std::endl;
 	for (const auto& i : RemoveMonsterTarget)
 	{
 		Monsters.erase(i);
@@ -133,15 +144,35 @@ void GameMgr::Update()
 	{
 		OtherActors.erase(i);
 	}
+
+	if (SystemMessageTimer > 0.f)
+		SystemMessageTimer -= elapsedTime;
+	if (ChatBoxTimer > 0.f)
+		ChatBoxTimer -= elapsedTime;
 }
 
 void GameMgr::ProcessKeyUpInput(WPARAM wParam)
 {	
+	if (wParam == VK_RETURN)
+	{
+		if (IsChatInputMode)  SendChat();
+
+		IsChatInputMode = 1 - IsChatInputMode;
+		ChatBoxTimer = 5.f;
+		return;
+	}
+
 	OwnActor->ProcessUpInput(wParam);
 }
 
 void GameMgr::ProcessKeyDownInput(WPARAM wParam)
 {
+	if (IsChatInputMode)
+	{
+		InputChat(wParam);
+		return;
+	}
+
 	OwnActor->ProcessDownInput(wParam);
 }
 
@@ -185,7 +216,82 @@ void GameMgr::DrawBoard(HDC& memdc)
 
 void GameMgr::DrawUI(HDC& memdc)
 {
+	SetBkMode(memdc, TRANSPARENT);
+	// Pos
+	{
+		RECT TextRect = { WINWIDTH-400,0,WINWIDTH-10,20 };
+		auto OwnPos = GamePlayStatic::GetOwnActorPosition();
+		UINT TextFormat = DT_VCENTER | DT_CENTER | DT_SINGLELINE;
+		std::string PosString = "(" + std::to_string(OwnPos.X) + ", " + std::to_string(OwnPos.Y) + ")";
+		DrawTextA(memdc, PosString.c_str(), -1, &TextRect, TextFormat);
+	}
 
+
+	// Chat Box
+	if (ChatBoxTimer > 0.f)
+	{
+		ChatBoxImage.Draw(memdc, { 0,WINHEIGHT - 200,300,WINHEIGHT }, { 0,0,320,179 });
+		SetBkMode(memdc, TRANSPARENT);
+		if(IsChatInputMode)
+		{	// Now input Chat
+			RECT TextRect = { 0,WINHEIGHT - 20,300 - 10,WINHEIGHT };
+			UINT TextFormat = DT_LEFT | DT_SINGLELINE;
+			FillRect(memdc, &TextRect, 0);
+			DrawTextA(memdc, NowChat.c_str(), -1, &TextRect, TextFormat);
+		}
+		{	// Server Chat
+			for (int i = 0; i < Chats.size(); i++)
+			{
+				int PosY = WINHEIGHT - 20 * (Chats.size() - i + 1);
+				RECT TextRect = { 0,PosY,300,PosY + 20 };
+				UINT TextFormat = DT_LEFT | DT_SINGLELINE;
+				DrawTextA(memdc, Chats[i].c_str(), -1, &TextRect, TextFormat);
+			}
+		}
+	}
+
+
+	// System Msg
+	SetBkMode(memdc, TRANSPARENT);
+	if (SystemMessageTimer > 0.f)
+	{
+		//HFONT hFont = CreateFont(
+		//	24,                         // 높이
+		//	0,                          // 너비
+		//	0,                          // 기울기 각도
+		//	0,                          // 기준선과의 각도
+		//	FW_NORMAL,                  // 굵기
+		//	FALSE,                      // 이탤릭체
+		//	FALSE,                      // 밑줄
+		//	FALSE,                      // 취소선
+		//	HANGEUL_CHARSET,            // 문자 집합
+		//	OUT_DEFAULT_PRECIS,         // 출력 정밀도
+		//	CLIP_DEFAULT_PRECIS,        // 클리핑 정밀도
+		//	DEFAULT_QUALITY,            // 출력 품질
+		//	DEFAULT_PITCH | FF_SWISS,   // 피치와 폰트 패밀리
+		//	_T("맑은 고딕"));           // 폰트 이름
+		//HFONT hOldFont = (HFONT)SelectObject(memdc, hFont);
+
+		RECT TextRect = { 40, WINHEIGHT / 2 + 100, WINWIDTH, WINHEIGHT / 2 + 150 };
+		UINT TextFormat = DT_CENTER | DT_VCENTER | DT_SINGLELINE;
+		DrawTextA(memdc, SystemText.c_str(), -1, &TextRect, TextFormat);
+	}
+}
+
+void GameMgr::OnSystemMessage(const std::string mess)
+{
+	SystemText.clear();
+	SystemText = "[System]: " + mess;
+	SystemMessageTimer = 5.f;
+}
+
+void GameMgr::InputChat(WPARAM wParam)
+{
+	if (NowChat.size() <= 240)
+	{
+		if (('a' <= wParam && wParam <= 'z') || ('A' <= wParam && wParam <= 'Z') || ('0' <= wParam && wParam <= '9'))
+			NowChat += wParam;
+	}
 }
 
 void GameMgr::SendLogin()
@@ -221,6 +327,16 @@ void GameMgr::SendState()
 	CS_STATE_CHANGE_PACKET CSCP;
 	CSCP.ChangedState = (BYTE)OwnActor->GetState();
 	Send(&CSCP);
+}
+
+void GameMgr::SendChat()
+{
+	NowChat += "\0";
+	CS_CHAT_PACKET CCP;
+	strcpy_s(CCP.mess, NowChat.c_str());
+	Send(&CCP);
+
+	NowChat.clear();
 }
 
 void GameMgr::ProcessAddObject(SC_ADD_OBJECT_PACKET* SAOP)
@@ -313,6 +429,16 @@ void GameMgr::ProcessStateChange(SC_STATE_CHANGE_PACKET* SSCP)
 		}
 }
 
+void GameMgr::ProcessChat(SC_CHAT_PACKET* SCP)
+{
+	if (Chats.size() > 8)
+	{
+		Chats.erase(Chats.begin());
+	}
+	Chats.emplace_back("[" + std::to_string(SCP->id) + "]: " + SCP->mess);
+	ChatBoxTimer = 5.f;
+}
+
 void GameMgr::SetOwnActorID(const char* ID)
 {
 	OwnActor->SetName(ID);
@@ -361,6 +487,7 @@ void GameMgr::ProcessRecv(PACKET* packet)
 	case SC_MOVE_OBJECT:
 		break;
 	case SC_CHAT:
+		ProcessChat(reinterpret_cast<SC_CHAT_PACKET*>(packet));
 		break;
 	case SC_STAT_CHANGE:
 		ProcessStatChange(reinterpret_cast<SC_STAT_CHANGE_PACKET*>(packet));

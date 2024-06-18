@@ -5,8 +5,8 @@ constexpr int PORT_NUM = 4000;
 constexpr int NAME_SIZE = 20;
 constexpr int CHAT_SIZE = 300;
 
-constexpr int MAX_USER = 10000;
-constexpr int MAX_NPC = 200;
+constexpr int MAX_USER = 30000;
+constexpr int MAX_NPC = 20000;
 
 constexpr int W_WIDTH = 2000;
 constexpr int W_HEIGHT = 2000;
@@ -69,7 +69,7 @@ struct CS_8DIRECT_MOVE_PACKET : PACKET {
 };
 
 struct CS_CHAT_PACKET : PACKET {
-	char	mess[CHAT_SIZE];
+	char	mess[CHAT_SIZE - 50];
 
 	CS_CHAT_PACKET() : PACKET(CS_CHAT) { size = sizeof(CS_CHAT_PACKET); }
 };
@@ -150,7 +150,7 @@ struct SC_8DIRECT_MOVE_OBJECT_PACKET : PACKET {
 
 struct SC_CHAT_PACKET : PACKET {
 	int		id;
-	char	mess[CHAT_SIZE];
+	char	mess[CHAT_SIZE - 50];
 
 	SC_CHAT_PACKET() : PACKET(SC_CHAT) { size = sizeof(SC_CHAT_PACKET); }
 };

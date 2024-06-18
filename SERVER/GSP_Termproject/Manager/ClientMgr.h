@@ -45,6 +45,7 @@ public:
 	void ProcessNPCMove(int id, OverExpansion* exp);
 	void ProcessAttack(CS_ATTACK_PACKET* CAP, Client* c);
 	void ProcessStateChange(CS_STATE_CHANGE_PACKET* CSCP, Client* c);
+	void ProcessChat(CS_CHAT_PACKET* CCP, Client* c);
 
 private:
 	std::array<Client*, MAX_USER + MAX_NPC> Clients;

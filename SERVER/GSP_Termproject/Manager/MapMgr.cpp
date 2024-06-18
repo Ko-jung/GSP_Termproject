@@ -8,7 +8,7 @@ void MapMgr::Init()
 	std::cout << "World Loading ... " << std::endl;
 
 	CImage MapImage;
-	MapImage.Load(TEXT("../../Common/Image/MiniWorldMapTile.png"));
+	MapImage.Load(TEXT("../../Common/Image/WorldMapTile.png"));
 
 	if (MapImage.IsNull())
 	{
@@ -19,9 +19,9 @@ void MapMgr::Init()
 	int Width = MapImage.GetWidth();
 	int Height = MapImage.GetHeight();
 
-	for (int i = 0; i < Height; i++)
-	{
 		for (int j = 0; j < Width; j++)
+	{
+	for (int i = 0; i < Height; i++)
 		{
 			COLORREF PixelColor = MapImage.GetPixel(i, j);
 			int Red = GetRValue(PixelColor);
@@ -30,7 +30,7 @@ void MapMgr::Init()
 
 			if (Red == 0 && Green == 0 && Blue == 0)
 			{
-				WorldMap[i][j] = (WORD)MAP_INFO::WALLS_BLOCK;
+				WorldMap[j][i] = (WORD)MAP_INFO::WALLS_BLOCK;
 			}
 			else if (Red == 255 && Green == 0 && Blue == 0)
 			{
@@ -38,14 +38,22 @@ void MapMgr::Init()
 			}
 			else if (Red == 0 && Green == 255 && Blue == 0)
 			{
-				WorldMap[i][j] = (WORD)MAP_INFO::GROUND_EMPTY;
+				WorldMap[j][i] = (WORD)MAP_INFO::GROUND_EMPTY;
+				CanSpawnPos.emplace_back(std::make_pair(i, j));
 			}
 			else if (Red == 0 && Green == 0 && Blue == 255)
 			{
-				WorldMap[i][j] = (WORD)MAP_INFO::GROUND_EMPTY;
+				WorldMap[j][i] = (WORD)MAP_INFO::GROUND_EMPTY;
+				CanSpawnPos.emplace_back(std::make_pair(i, j));
 			}
 		}
 	}
 
 	std::cout << "World Loading Complete" << std::endl;
+}
+
+std::pair<WORD, WORD> MapMgr::GetRandomCanSpawnPos()
+{
+	int Index = CanSpawnPos.size() - 1;
+	return CanSpawnPos[rand() % Index];
 }

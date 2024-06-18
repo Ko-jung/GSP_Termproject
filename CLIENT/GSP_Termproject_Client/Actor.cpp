@@ -4,6 +4,7 @@
 
 #include "GamePlayStatic.h"
 #include "Manager/MapMgr.h"
+#include "Manager/GameMgr.h"
 
 CImage Actor::Img;
 CImage Actor::AttackEffectImg;
@@ -139,7 +140,7 @@ void Actor::InitUsePacket(SC_ADD_OBJECT_PACKET* SAOP)
 	Position.Y = SAOP->y;
 	MaxHp = SAOP->max_hp;
 	CurrentHp = SAOP->hp;
-
+	SerialNum = SAOP->id;
 	Name = SAOP->name;
 
 	// Processing Visual
@@ -543,6 +544,9 @@ void Actor::ProcessLogin(SC_LOGIN_INFO_PACKET* SLIP)
 	Level = SLIP->level;
 	Position.X = SLIP->x;
 	Position.Y = SLIP->y;
+	SerialNum = SLIP->id;
+
+	GameMgr::Instance()->OnSystemMessage("Welcome " + Name + ". SerialNum is " + std::to_string(SerialNum));
 }
 
 void Actor::ProcessMove(SC_MOVE_OBJECT_PACKET* SLIP)
@@ -569,6 +573,7 @@ void Actor::ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP)
 		{
 			ChangeState(ACTOR_STATE::DIE);
 			IsCanMove = false;
+			GameMgr::Instance()->OnSystemMessage(std::to_string(SSCP->id) + " is DIED!");
 		}
 	}
 

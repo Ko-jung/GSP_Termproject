@@ -51,6 +51,7 @@ public:
 	void ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP);
 
 	bool IsCanRemove;
+	int SerialNum;
 protected:
 	void DrawBody(HDC& memdc, const RECT& ImageDst);
 	void DrawArm(HDC& memdc, const RECT& ImageDst);

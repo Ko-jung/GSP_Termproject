@@ -2,6 +2,8 @@
 #include "Define.h"
 #include "GamePlayStatic.h"
 
+#include "Manager/GameMgr.h"
+
 CImage Monster::Img;
 std::vector<std::vector<std::vector<std::pair<int, int>>>> Monster::Sprites;
 int Monster::ImageSpriteWidth;
@@ -164,7 +166,11 @@ void Monster::ProcessChangeStat(SC_STAT_CHANGE_PACKET* SSCP)
 		ShowHpBarTimer = 3.f;
 
 		if (CurrentHp <= 0)
+		{
 			ChangeState(MONSTER_STATE::DIE);
+
+			GameMgr::Instance()->OnSystemMessage("Monster [" + std::to_string(SSCP->id) + "] is DIED!");
+		}
 	}
 
 	if (MaxHp != SSCP->max_hp)

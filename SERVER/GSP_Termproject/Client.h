@@ -25,6 +25,7 @@ public:
 	RectF GetCollisionFBox();
 
 	void SendLoginInfo();
+	void SendLoginInfo(SC_LOGIN_INFO_PACKET* SLIP);
 	void SendStressTestMovePos();
 	void SendMovePos(Client* c);
 	void SendAddPlayer(Client* c);

@@ -10,6 +10,7 @@
 #include "Manager/MapMgr.h"
 #include "Manager/SectorMgr.h"
 #include "Manager/TimerMgr.h"
+#include "Manager/DBMgr.h"
 
 #include "Client.h"
 
@@ -26,6 +27,8 @@ bool IOCPServer::Init(const int WNum)
 {
 	// MapMgr Init
 	MapMgr::Instance()->Init();
+	
+	DBMgr::Instance();
 
 	WSADATA WSAData;
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
