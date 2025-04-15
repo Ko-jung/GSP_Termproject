@@ -8,7 +8,7 @@ void MapMgr::Init()
 	std::cout << "World Loading ... " << std::endl;
 
 	CImage MapImage;
-	MapImage.Load(TEXT("../../Common/Image/WorldMapTile.png"));
+	MapImage.Load(TEXT("../../Common/Image/MiniWorldMapTile.png"));
 
 	if (MapImage.IsNull())
 	{

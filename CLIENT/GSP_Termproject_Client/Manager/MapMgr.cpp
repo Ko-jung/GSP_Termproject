@@ -5,7 +5,7 @@ void MapMgr::Init()
 	WorldImageTile.Load(TEXT("Image/Map/MapImage.png"));
 
 	CImage WorldImage;
-	WorldImage.Load(TEXT("../../Common/Image/WorldMapTile.png"));
+	WorldImage.Load(TEXT("../../Common/Image/MiniWorldMapTile.png"));
 	//WorldImageTile.Load(TEXT("../../Common/Image/WorldMapTile.png"));
 
 	int Width = WorldImage.GetWidth();
