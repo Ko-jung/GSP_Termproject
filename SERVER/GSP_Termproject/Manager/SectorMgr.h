@@ -33,7 +33,7 @@ public:
 			return &Sectors.at(y).at(x);
 		}
 		catch (const std::out_of_range& e){
-			std::cerr << "예외 발생: WWW" << e.what() << std::endl;
+			std::cout << "Error!: " << e.what() << std::endl;
 		}
 	}
 

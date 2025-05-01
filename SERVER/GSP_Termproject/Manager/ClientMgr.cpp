@@ -11,6 +11,7 @@
 #include "../CollisionChecker.h"
 
 #include <atomic>
+#include <cassert>
 
 ClientMgr::ClientMgr() :
 	ClientCount(0)
@@ -134,7 +135,6 @@ void ClientMgr::SendPosToOtherClientUseSector(Client* c)
 
 		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
 
-		SectorMgr* SectorInstance = SectorMgr::Instance();
 		Sector* sector = SectorMgr::Instance()->GetSector(X, Y);
 		sector->SectorLock.lock();
 		for (auto& cl : sector->SectorClient)
@@ -345,7 +345,7 @@ void ClientMgr::WakeUpNPC(int NpcID, int WakerID)
 	bool old_state = false;
 	if (false == std::atomic_compare_exchange_strong(&NPC->IsActive, &old_state, true))
 		return;
-	TimerEvent evnt{ NpcID, std::chrono::system_clock::now(), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
+	TimerEvent evnt = { NpcID, std::chrono::system_clock::now(), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
 	TimerMgr::Instance()->Insert(evnt);
 }
 
@@ -370,7 +370,7 @@ void ClientMgr::ProcessClientDie(Client* Target)
 	}
 	else
 	{
-		TimerEvent evnt{ Target->ClientNum, std::chrono::system_clock::now() + std::chrono::seconds(5), EVENT_TYPE::EV_SPAWN_PLAYER, 0 };
+		TimerEvent evnt = TimerEvent{ Target->ClientNum, std::chrono::system_clock::now() + std::chrono::seconds(5), EVENT_TYPE::EV_SPAWN_PLAYER, 0 };
 		TimerMgr::Instance()->Insert(evnt);
 	}
 }
@@ -455,31 +455,40 @@ void ClientMgr::ProcessNPCMove(int id, OverExpansion* exp)
 	Client* NPC = Clients[id];
 	bool KeepAlive = false;
 
+	SectorMgr* p = SectorMgr::Instance();
+	int Y;
+	int X;
+
 	for (int i = 0; i < 9; i++)
 	{
-		int Y = (NPC->Position.Y / SECTORSIZE) + i / 3 - 1;
-		int X = (NPC->Position.X / SECTORSIZE) + i % 3 - 1;
+		Y = (NPC->Position.Y / SECTORSIZE) + i / 3 - 1;
+		X = (NPC->Position.X / SECTORSIZE) + i % 3 - 1;
 
 		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
 
 		Sector* sector = SectorMgr::Instance()->GetSector(X,Y);
 		sector->SectorLock.lock();
+		int j = 0;
 		for (auto& pClient : sector->SectorClient)
 		{
+			assert(pClient != nullptr);
+			
 			if (pClient->State == CLIENT_STATE::INGAME && CanSee(NPC, pClient))
 			{
 				KeepAlive = true;
 				i = 9;
 				break;
 			}
+			j++;
 		}
 		sector->SectorLock.unlock();
 	}
-
+	TimerMgr* pp = TimerMgr::Instance();
 	if (KeepAlive)
 	{
 		NPCRandomMove(NPC);
-		TimerEvent evnt{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
+		//TimerEvent* evnt = new TimerEvent{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
+		TimerEvent evnt(id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0);
 		TimerMgr::Instance()->Insert(evnt);
 	}
 	else
