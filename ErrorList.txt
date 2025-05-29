@@ -1,0 +1,99 @@
+=================================================================
+==17340==ERROR: AddressSanitizer: heap-use-after-free on address 0x11cdf701ac04 at pc 0x7ff7a92e6a2a bp 0x0043b88ff250 sp 0x0043b88ff258
+READ of size 4 at 0x11cdf701ac04 thread T11
+==17340==WARNING: Failed to use and restart external symbolizer!
+    #0 0x7ff7a92e6a29 in Client::SendRemovePlayer C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Client.cpp:277
+    #1 0x7ff7a9316256 in ClientMgr::SendPosToOtherClientUseSector C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\ClientMgr.cpp:206
+    #2 0x7ff7a93196b1 in ClientMgr::ProcessMove C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\ClientMgr.cpp:470
+    #3 0x7ff7a9334657 in PacketMgr::ProcessPacket C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\PacketMgr.cpp:25
+    #4 0x7ff7a92e38ee in Client::RecvProcess C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Client.cpp:102
+    #5 0x7ff7a9314e9f in ClientMgr::RecvProcess C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\ClientMgr.cpp:64
+    #6 0x7ff7a9303c0f in IOCPServer::Worker C:\Github\GSP_Termproject\SERVER\GSP_Termproject\IOCPServer.cpp:130
+    #7 0x7ff7a93048e7 in `IOCPServer::StartServer'::`4'::<lambda_1>::operator() C:\Github\GSP_Termproject\SERVER\GSP_Termproject\IOCPServer.cpp:89
+    #8 0x7ff7a9307c3e in std::invoke<`IOCPServer::StartServer'::`4'::<lambda_1> > C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\type_traits:1729
+    #9 0x7ff7a930699b in std::thread::_Invoke<std::tuple<`IOCPServer::StartServer'::`4'::<lambda_1> >,0> C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\thread:60
+    #10 0x7ffc728c300f in register_onexit_function+0x12f (C:\WINDOWS\SYSTEM32\ucrtbased.dll+0x1800b300f)
+    #11 0x7ffc72b3ebde in _asan_default_suppressions__dll+0x122e (C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\bin\HostX64\x64\clang_rt.asan_dynamic-x86_64.dll+0x18004ebde)
+    #12 0x7ffcb0a97373 in BaseThreadInitThunk+0x13 (C:\WINDOWS\System32\KERNEL32.DLL+0x180017373)
+    #13 0x7ffcb29dcc90 in RtlUserThreadStart+0x20 (C:\WINDOWS\SYSTEM32\ntdll.dll+0x18004cc90)
+
+0x11cdf701ac04 is located 4 bytes inside of 688-byte region [0x11cdf701ac00,0x11cdf701aeb0)
+freed by thread T11 here:
+    #0 0x7ff7a933f143 in operator delete D:\a\_work\1\s\src\vctools\asan\llvm\compiler-rt\lib\asan\asan_win_delete_scalar_size_thunk.cpp:41
+    #1 0x7ff7a931dcc0 in Client::`scalar deleting destructor'+0x30 (C:\Github\GSP_Termproject\SERVER\x64\Debug\GSP_Termproject.exe+0x14003dcc0)
+    #2 0x7ff7a93185f6 in ClientMgr::ProcessClientDie C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\ClientMgr.cpp:390
+    #3 0x7ff7a931b463 in ClientMgr::ProcessAttack C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\ClientMgr.cpp:587
+    #4 0x7ff7a93346a3 in PacketMgr::ProcessPacket C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\PacketMgr.cpp:35
+    #5 0x7ff7a92e38ee in Client::RecvProcess C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Client.cpp:102
+    #6 0x7ff7a9314e9f in ClientMgr::RecvProcess C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\ClientMgr.cpp:64
+    #7 0x7ff7a9303c0f in IOCPServer::Worker C:\Github\GSP_Termproject\SERVER\GSP_Termproject\IOCPServer.cpp:130
+    #8 0x7ff7a93048e7 in `IOCPServer::StartServer'::`4'::<lambda_1>::operator() C:\Github\GSP_Termproject\SERVER\GSP_Termproject\IOCPServer.cpp:89
+    #9 0x7ff7a9307c3e in std::invoke<`IOCPServer::StartServer'::`4'::<lambda_1> > C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\type_traits:1729
+    #10 0x7ff7a930699b in std::thread::_Invoke<std::tuple<`IOCPServer::StartServer'::`4'::<lambda_1> >,0> C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\thread:60
+    #11 0x7ffc728c300f in register_onexit_function+0x12f (C:\WINDOWS\SYSTEM32\ucrtbased.dll+0x1800b300f)
+    #12 0x7ffc72b3ebde in _asan_default_suppressions__dll+0x122e (C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\bin\HostX64\x64\clang_rt.asan_dynamic-x86_64.dll+0x18004ebde)
+    #13 0x7ffcb0a97373 in BaseThreadInitThunk+0x13 (C:\WINDOWS\System32\KERNEL32.DLL+0x180017373)
+    #14 0x7ffcb29dcc90 in RtlUserThreadStart+0x20 (C:\WINDOWS\SYSTEM32\ntdll.dll+0x18004cc90)
+
+previously allocated by thread T0 here:
+    #0 0x7ff7a933f025 in operator new D:\a\_work\1\s\src\vctools\asan\llvm\compiler-rt\lib\asan\asan_win_new_scalar_thunk.cpp:40
+    #1 0x7ff7a9314420 in ClientMgr::InitNPC C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Manager\ClientMgr.cpp:39
+    #2 0x7ff7a930321d in IOCPServer::StartServer C:\Github\GSP_Termproject\SERVER\GSP_Termproject\IOCPServer.cpp:83
+    #3 0x7ff7a9310320 in main C:\Github\GSP_Termproject\SERVER\GSP_Termproject\main.cpp:18
+    #4 0x7ff7a9340618 in invoke_main D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:78
+    #5 0x7ff7a934056d in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288
+    #6 0x7ff7a934042d in __scrt_common_main D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:330
+    #7 0x7ff7a934068d in mainCRTStartup D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_main.cpp:16
+    #8 0x7ffcb0a97373 in BaseThreadInitThunk+0x13 (C:\WINDOWS\System32\KERNEL32.DLL+0x180017373)
+    #9 0x7ffcb29dcc90 in RtlUserThreadStart+0x20 (C:\WINDOWS\SYSTEM32\ntdll.dll+0x18004cc90)
+
+Thread T11 created by T0 here:
+    #0 0x7ffc72b40897 in _asan_wrap_CreateThread+0x77 (C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\bin\HostX64\x64\clang_rt.asan_dynamic-x86_64.dll+0x180050897)
+    #1 0x7ffc728c387e in beginthreadex+0x14e (C:\WINDOWS\SYSTEM32\ucrtbased.dll+0x1800b387e)
+    #2 0x7ff7a93070f9 in std::thread::_Start<`IOCPServer::StartServer'::`4'::<lambda_1> > C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\thread:78
+    #3 0x7ff7a9305428 in std::thread::thread<`IOCPServer::StartServer'::`4'::<lambda_1>,0> C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\thread:93
+    #4 0x7ff7a93075fc in std::construct_at<std::thread,`IOCPServer::StartServer'::`4'::<lambda_1>,0> C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility:242
+    #5 0x7ff7a930755d in std::_Default_allocator_traits<std::allocator<std::thread> >::construct<std::thread,`IOCPServer::StartServer'::`4'::<lambda_1> > C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xmemory:725
+    #6 0x7ff7a9305b00 in std::vector<std::thread,std::allocator<std::thread> >::_Emplace_back_with_unused_capacity<`IOCPServer::StartServer'::`4'::<lambda_1> > C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\vector:798
+    #7 0x7ff7a9305edf in std::vector<std::thread,std::allocator<std::thread> >::_Emplace_one_at_back<`IOCPServer::StartServer'::`4'::<lambda_1> > C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\vector:780
+    #8 0x7ff7a9307698 in std::vector<std::thread,std::allocator<std::thread> >::emplace_back<`IOCPServer::StartServer'::`4'::<lambda_1> > C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\vector:862
+    #9 0x7ff7a930333d in IOCPServer::StartServer C:\Github\GSP_Termproject\SERVER\GSP_Termproject\IOCPServer.cpp:89
+    #10 0x7ff7a9310320 in main C:\Github\GSP_Termproject\SERVER\GSP_Termproject\main.cpp:18
+    #11 0x7ff7a9340618 in invoke_main D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:78
+    #12 0x7ff7a934056d in __scrt_common_main_seh D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288    #13 0x7ff7a934042d in __scrt_common_main D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:330
+    #14 0x7ff7a934068d in mainCRTStartup D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_main.cpp:16
+    #15 0x7ffcb0a97373 in BaseThreadInitThunk+0x13 (C:\WINDOWS\System32\KERNEL32.DLL+0x180017373)
+    #16 0x7ffcb29dcc90 in RtlUserThreadStart+0x20 (C:\WINDOWS\SYSTEM32\ntdll.dll+0x18004cc90)
+
+SUMMARY: AddressSanitizer: heap-use-after-free C:\Github\GSP_Termproject\SERVER\GSP_Termproject\Client.cpp:277 in Client::SendRemovePlayer
+Shadow bytes around the buggy address:
+  0x03d9b5d83530: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x03d9b5d83540: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x03d9b5d83550: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x03d9b5d83560: 00 00 00 00 00 00 fa fa fa fa fa fa fa fa fa fa
+  0x03d9b5d83570: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+=>0x03d9b5d83580:[fd]fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x03d9b5d83590: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x03d9b5d835a0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x03d9b5d835b0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x03d9b5d835c0: fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd fd
+  0x03d9b5d835d0: fd fd fd fd fd fd fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb

@@ -3,7 +3,7 @@
 #include "ClientMgr.h"
 #include "../Client.h"
 
-void SectorMgr::Insert(Client* Target)
+void SectorMgr::Insert(std::shared_ptr<Client> Target)
 {
 	Sector& SectorSet = Sectors[(int)Target->Position.Y / SECTORSIZE][(int)Target->Position.X / SECTORSIZE];
 
@@ -12,13 +12,13 @@ void SectorMgr::Insert(Client* Target)
 	SectorSet.SectorLock.unlock();
 }
 
-void SectorMgr::UnsafeInsert(Client* Target)
+void SectorMgr::UnsafeInsert(std::shared_ptr<Client> Target)
 {
 	Sector& SectorSet = Sectors[(int)Target->Position.Y / SECTORSIZE][(int)Target->Position.X / SECTORSIZE];
 	SectorSet.SectorClient.insert(Target);
 }
 
-void SectorMgr::Remove(Client* Target)
+void SectorMgr::Remove(std::shared_ptr<Client> Target)
 {
 	Sector& SectorSet = Sectors[(int)Target->Position.Y / SECTORSIZE][(int)Target->Position.X / SECTORSIZE];
 
@@ -27,7 +27,7 @@ void SectorMgr::Remove(Client* Target)
 	SectorSet.SectorLock.unlock();
 }
 
-void SectorMgr::MoveSector(Client* Target, int TargetPrevSectorX, int TargetPrevSectorY)
+void SectorMgr::MoveSector(std::shared_ptr<Client> Target, int TargetPrevSectorX, int TargetPrevSectorY)
 {
 	if ((Target->Position.X / SECTORSIZE) != TargetPrevSectorX || (Target->Position.Y / SECTORSIZE) != TargetPrevSectorY)
 	{
@@ -44,7 +44,7 @@ void SectorMgr::MoveSector(Client* Target, int TargetPrevSectorX, int TargetPrev
 	}
 }
 
-void SectorMgr::MakeViewList(std::unordered_set<Client*>& ViewList, Client* Center, bool IsIncludeNPC)
+void SectorMgr::MakeViewList(std::unordered_set<std::shared_ptr<Client>>& ViewList, std::shared_ptr<Client> Center, bool IsIncludeNPC)
 {
 	for (int i = 0; i < 9; i++)
 	{
@@ -53,17 +53,17 @@ void SectorMgr::MakeViewList(std::unordered_set<Client*>& ViewList, Client* Cent
 
 		if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
 
-		Sector* sector = &Sectors[Y][X];
-		sector->SectorLock.lock();
-		for (auto& pClient : sector->SectorClient)
+		Sector& sector = Sectors[Y][X];
+		sector.SectorLock.lock();
+		for (std::shared_ptr<Client> pClient : sector.SectorClient)
 		{
 			if (pClient == Center) continue;
 			if (!IsIncludeNPC && ClientMgr::IsNPC(pClient)) continue;
 			if (ClientMgr::CanSee(pClient, Center))
 			{
-				ViewList.insert(pClient);
+				//ViewList.insert(pClient);
 			}
 		}
-		sector->SectorLock.unlock();
+		sector.SectorLock.unlock();
 	}
 }

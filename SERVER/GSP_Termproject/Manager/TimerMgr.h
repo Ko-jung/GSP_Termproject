@@ -24,10 +24,10 @@ public:
 
 public:
 	void Pop();
-	void Insert(TimerEvent TE);
+	void Insert(TimerEvent* TE);
 	void SetIOCP(HANDLE* hIOCP) { this->phIOCP = hIOCP; }
 
 	HANDLE* phIOCP;
-	Concurrency::concurrent_priority_queue<TimerEvent> TimerQueue;
+	Concurrency::concurrent_priority_queue<TimerEvent*> TimerQueue;
 };
 

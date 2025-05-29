@@ -185,7 +185,12 @@ void IOCPServer::ProcessAccept(OverExpansion* exp)
 	if (ClientMgr::Instance()->GetClientCount() < MAX_USER)
 	{
 		int NowClientNum;
-		Client* NewClient = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+		std::shared_ptr<Client> NewClient = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+		if (NewClient == nullptr)
+		{
+			std::cerr << "Client NULL!" << std::endl;
+			return;
+		}
 
 		NewClient->ClientNum = NowClientNum;
 		NewClient->Socket = (*(reinterpret_cast<SOCKET*>(exp->_send_buf)));

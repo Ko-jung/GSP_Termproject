@@ -42,8 +42,6 @@ void Client::Init()
 	LastMoveTime = 0;
 
 	Direction = ACTOR_DIRECTION::DOWN;
-	ViewListLock;
-	ViewList;
 
 	std::lock_guard<std::mutex> ll(StateMutex);
 	State = CLIENT_STATE::FREE;
@@ -99,7 +97,7 @@ void Client::RecvProcess(int byte, OverExpansion* exp)
 		PACKET* packet = reinterpret_cast<PACKET*>(Buf);
 		if (RemainData >= packet->size)
 		{
-			PacketMgr::Instance()->ProcessPacket(packet, this);
+			PacketMgr::Instance()->ProcessPacket(packet, std::shared_ptr<Client>(this));
 			Buf += packet->size;
 			RemainData -= packet->size;
 		}
@@ -158,15 +156,15 @@ void Client::Move(POSITION NewPos, char direction)
 
 	// Client Position Reset
 	if(IsRollBacked)
-		SendMovePos(this);
+		SendMovePos(std::shared_ptr<Client>(this));
 
 	if (CurrSectorXPos != PrevSectorXPos || CurrSectorYPos != PrevSectorYPos)
 	{
-		SectorMgr::Instance()->MoveSector(this, PrevSectorXPos, PrevSectorYPos);
+		SectorMgr::Instance()->MoveSector(std::shared_ptr<Client>(this), PrevSectorXPos, PrevSectorYPos);
 	}
 }
 
-bool Client::ApplyDamage(Client* Attacker, const int Damage)
+bool Client::ApplyDamage(std::shared_ptr<Client> Attacker, const int Damage)
 {
 	CurrentHP.fetch_add(-Damage);
 
@@ -231,7 +229,7 @@ void Client::SendStressTestMovePos()
 	Send(&SMOP);
 }
 
-void Client::SendMovePos(Client* c)
+void Client::SendMovePos(std::shared_ptr<Client> c)
 {	
 	// Send Self Pos or Other Pos
 	SC_8DIRECT_MOVE_OBJECT_PACKET SDMOP;
@@ -243,7 +241,7 @@ void Client::SendMovePos(Client* c)
 	Send(&SDMOP);
 }
 
-void Client::SendAddPlayer(Client* c)
+void Client::SendAddPlayer(std::shared_ptr<Client> c)
 {
 	SC_ADD_OBJECT_PACKET SAOP;
 	SAOP.id = c->ClientNum;
@@ -262,7 +260,7 @@ void Client::SendAddPlayer(Client* c)
 	Send(&SAOP);
 }
 
-void Client::SendRemovePlayer(Client* c)
+void Client::SendRemovePlayer(std::shared_ptr<Client> c)
 {
 	ViewListLock.lock();
 	if (ViewList.count(c))
@@ -278,7 +276,7 @@ void Client::SendRemovePlayer(Client* c)
 	Send(&SROP);
 }
 
-void Client::SendStatChange(Client* c)
+void Client::SendStatChange(std::shared_ptr<Client> c)
 {
 	SC_STAT_CHANGE_PACKET SSCP;
 	SSCP.id = c->ClientNum;

@@ -19,7 +19,7 @@ public:
 
 	void StressTestMove(char Direction);
 	void Move(POSITION NewPos, char direction);
-	bool ApplyDamage(Client* Attacker, const int Damage);
+	bool ApplyDamage(std::shared_ptr<Client> Attacker, const int Damage);
 
 	RECT GetCollisionBox();
 	RectF GetCollisionFBox();
@@ -27,10 +27,10 @@ public:
 	void SendLoginInfo();
 	void SendLoginInfo(SC_LOGIN_INFO_PACKET* SLIP);
 	void SendStressTestMovePos();
-	void SendMovePos(Client* c);
-	void SendAddPlayer(Client* c);
-	void SendRemovePlayer(Client* c);
-	void SendStatChange(Client* c);
+	void SendMovePos(std::shared_ptr<Client> c);
+	void SendAddPlayer(std::shared_ptr<Client> c);
+	void SendRemovePlayer(std::shared_ptr<Client> c);
+	void SendStatChange(std::shared_ptr<Client> c);
 
 	std::atomic_bool IsActive;
 	int ClientNum;
@@ -50,10 +50,11 @@ public:
 	int Experience;
 	int Level;
 
+	std::mutex Mutex;
 	std::mutex StateMutex;
 	int LastMoveTime;
 	std::mutex	ViewListLock;
-	std::unordered_set<Client*> ViewList;
+	std::unordered_set<std::shared_ptr<Client>> ViewList;
 
 	static int ImageSpriteWidth;
 	static int ImageSpriteHeight;
