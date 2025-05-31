@@ -6,7 +6,7 @@
 #include <mutex>
 #include <chrono>
 
-class Client
+class Client : public std::enable_shared_from_this<Client>
 {
 public:
 	Client();

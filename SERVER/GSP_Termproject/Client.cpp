@@ -28,6 +28,7 @@ Client::Client() :
 
 Client::~Client()
 {
+	std::cerr << "~Client() Called" << std::endl;
 }
 
 void Client::Init()
@@ -97,7 +98,7 @@ void Client::RecvProcess(int byte, OverExpansion* exp)
 		PACKET* packet = reinterpret_cast<PACKET*>(Buf);
 		if (RemainData >= packet->size)
 		{
-			PacketMgr::Instance()->ProcessPacket(packet, std::shared_ptr<Client>(this));
+			PacketMgr::Instance()->ProcessPacket(packet, shared_from_this());
 			Buf += packet->size;
 			RemainData -= packet->size;
 		}
@@ -156,11 +157,11 @@ void Client::Move(POSITION NewPos, char direction)
 
 	// Client Position Reset
 	if(IsRollBacked)
-		SendMovePos(std::shared_ptr<Client>(this));
+		SendMovePos(shared_from_this());
 
 	if (CurrSectorXPos != PrevSectorXPos || CurrSectorYPos != PrevSectorYPos)
 	{
-		SectorMgr::Instance()->MoveSector(std::shared_ptr<Client>(this), PrevSectorXPos, PrevSectorYPos);
+		SectorMgr::Instance()->MoveSector(shared_from_this(), PrevSectorXPos, PrevSectorYPos);
 	}
 }
 

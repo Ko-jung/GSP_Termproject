@@ -70,15 +70,13 @@ std::shared_ptr<Client> ClientMgr::GetEmptyClient(int& ClientNum)
 {
 	for (int i = 0; i < MAX_USER; i++)
 	{
+		std::lock_guard<std::mutex> ll(Clients[i]->StateMutex);
+		if (Clients[i]->State == CLIENT_STATE::FREE)
 		{
-			std::lock_guard<std::mutex> ll(Clients[i]->StateMutex);
-			if (Clients[i]->State == CLIENT_STATE::FREE)
-			{
-				Clients[i]->State = CLIENT_STATE::ALLOC;
-				ClientNum = i;
-				ClientCount++;
-				return Clients[i];
-			}
+			Clients[i]->State = CLIENT_STATE::ALLOC;
+			ClientNum = i;
+			ClientCount++;
+			return Clients[i];
 		}
 	}
 	return nullptr;
@@ -523,7 +521,7 @@ void ClientMgr::ProcessNPCMove(int id, OverExpansion* exp)
 	{
 		NPC->IsActive = true;
 
-		NPCRandomMove(NPC);
+		//NPCRandomMove(NPC);
 		
 		//TimerEvent evnt(id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0);
 		TimerEvent* evnt = new TimerEvent{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
