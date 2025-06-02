@@ -11,7 +11,6 @@
 #include "../CollisionChecker.h"
 
 #include <atomic>
-#include <cassert>
 
 ClientMgr::ClientMgr() :
 	ClientCount(0)
@@ -370,7 +369,7 @@ void ClientMgr::WakeUpNPC(int NpcID, int WakerID)
 		return;
 	//TimerEvent evnt = { NpcID, std::chrono::system_clock::now(), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
 	
-	TimerEvent* evnt = new TimerEvent{ NpcID, std::chrono::system_clock::now(), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
+	std::shared_ptr<TimerEvent> evnt = std::make_shared<TimerEvent>( NpcID, std::chrono::system_clock::now(), EVENT_TYPE::EV_RANDOM_MOVE, 0 );
 	TimerMgr::Instance()->Insert(evnt);
 }
 
@@ -400,7 +399,8 @@ void ClientMgr::ProcessClientDie(std::shared_ptr<Client> Target)
 	{
 		//TimerEvent evnt = TimerEvent{ Target->ClientNum, std::chrono::system_clock::now() + std::chrono::seconds(5), EVENT_TYPE::EV_SPAWN_PLAYER, 0 };
 
-		TimerEvent* evnt = new TimerEvent{ Target->ClientNum, std::chrono::system_clock::now() + std::chrono::seconds(5), EVENT_TYPE::EV_SPAWN_PLAYER, 0 };
+		std::shared_ptr<TimerEvent> evnt = std::make_shared<TimerEvent>(Target->ClientNum,
+			std::chrono::system_clock::now() + std::chrono::seconds(5), EVENT_TYPE::EV_SPAWN_PLAYER, 0 );
 		TimerMgr::Instance()->Insert(evnt);
 	}
 }
@@ -523,8 +523,8 @@ void ClientMgr::ProcessNPCMove(int id, OverExpansion* exp)
 
 		//NPCRandomMove(NPC);
 		
-		//TimerEvent evnt(id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0);
-		TimerEvent* evnt = new TimerEvent{ id, std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 };
+		std::shared_ptr<TimerEvent> evnt = std::make_shared<TimerEvent>(id,
+			std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 );
 		TimerMgr::Instance()->Insert(evnt);
 	}
 	else

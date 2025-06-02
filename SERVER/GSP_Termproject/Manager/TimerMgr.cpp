@@ -4,10 +4,12 @@
 
 void TimerMgr::Pop()
 {
-	TimerEvent* evnt;
+	std::shared_ptr<TimerEvent> evnt;
 	auto now = std::chrono::system_clock::now();
 	while (TimerQueue.try_pop(evnt))
 	{
+		assert(evnt != nullptr);
+
 		// Do Bind Func
 		if (evnt->WakeupTime <= std::chrono::system_clock::now())
 		{
@@ -39,12 +41,11 @@ void TimerMgr::Pop()
 			std::this_thread::yield();
 			return;
 		}
-		delete evnt;
 	}
 	std::this_thread::yield();
 }
 
-void TimerMgr::Insert(TimerEvent* TE)
+void TimerMgr::Insert(std::shared_ptr<TimerEvent> TE)
 {
 	TimerQueue.push(TE);
 }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <mutex>
+#include <cassert>
 
 #include <WS2tcpip.h>
 #include <MSWSock.h>
