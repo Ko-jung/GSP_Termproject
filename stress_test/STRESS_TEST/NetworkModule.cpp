@@ -300,10 +300,13 @@ void Adjust_Number_Of_Client()
 	ServerAddr.sin_port = htons(GAMESERVERPORT);
 	ServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-
+	auto Temp = high_resolution_clock::now();
 	int Result = WSAConnect(g_clients[num_connections].client_socket, (sockaddr*)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 	if (0 != Result) {
+		auto TempEnd = high_resolution_clock::now();
+		std::cout << "WSAConnect Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(TempEnd - Temp).count() << "ms" << std::endl;
 		error_display("WSAConnect : ", GetLastError());
+
 	}
 
 	g_clients[num_connections].curr_packet_size = 0;

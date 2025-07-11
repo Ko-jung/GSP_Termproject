@@ -129,15 +129,15 @@ void IOCPServer::Worker()
 				ClientMgr::Instance()->RecvProcess(client_id, num_byte, Exp);
 				break;
 			case COMP_TYPE::OP_SEND:
-				delete Exp;
+				//delete Exp;
 				break;
 			case COMP_TYPE::OP_NPC_MOVE:
 				ClientMgr::Instance()->ProcessNPCMove(client_id, Exp);
-				delete Exp;
+				//delete Exp;
 				break;
 			case COMP_TYPE::OP_SPAWN_PLAYER:
 				ClientMgr::Instance()->ProcessClientSpawn(client_id);
-				delete Exp;
+				//delete Exp;
 				break;
 		default:
 			break;

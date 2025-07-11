@@ -435,11 +435,15 @@ LRESULT CALLBACK WndProc(HWND	hWnd,			// Handle For This Window
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
+#include <iostream>
 int WINAPI WinMain(HINSTANCE	hInstance,			// Instance
 	HINSTANCE	hPrevInstance,		// Previous Instance
 	LPSTR		lpCmdLine,			// Command Line Parameters
 	int			nCmdShow)			// Window Show State
 {
+	setlocale(LC_ALL, "");
+	std::wcout.imbue(std::locale(""));
+
 	MSG		msg;									// Windows Message Structure
 	BOOL	done = FALSE;								// Bool Variable To Exit Loop
 

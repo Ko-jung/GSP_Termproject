@@ -6,7 +6,7 @@
 #include <mutex>
 #include <chrono>
 
-class Client : public std::enable_shared_from_this<Client>
+class alignas(64) Client : public std::enable_shared_from_this<Client>
 {
 public:
 	Client();

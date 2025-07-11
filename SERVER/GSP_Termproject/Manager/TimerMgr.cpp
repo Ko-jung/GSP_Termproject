@@ -18,6 +18,7 @@ void TimerMgr::Pop()
 			{
 			case EVENT_TYPE::EV_RANDOM_MOVE:
 			{
+				//std::shared_ptr<OverExpansion> over = std::make_shared< OverExpansion>();
 			OverExpansion* over = new OverExpansion;
 			over->_comp_type = COMP_TYPE::OP_NPC_MOVE;
 			PostQueuedCompletionStatus(*phIOCP, 1, evnt->IocpID, &over->_over);

@@ -26,15 +26,15 @@ constexpr char CS_LOGOUT = 5;			// 클라이언트에서 정상적으로 접속을 종료하는 패�
 constexpr char CS_8DIRECT_MOVE = 6;
 constexpr char CS_STATE_CHANGE = 7;
 
-constexpr char SC_LOGIN_INFO = 2;
-constexpr char SC_LOGIN_FAIL = 3;
-constexpr char SC_ADD_OBJECT = 4;
-constexpr char SC_REMOVE_OBJECT = 5;
-constexpr char SC_MOVE_OBJECT = 6;
-constexpr char SC_CHAT = 7;
-constexpr char SC_STAT_CHANGE = 8;
-constexpr char SC_8DIRECT_MOVE_OBJECT = 9;
-constexpr char SC_STATE_CHANGE = 10;
+constexpr char SC_LOGIN_INFO = 100;
+constexpr char SC_LOGIN_FAIL = 101;
+constexpr char SC_ADD_OBJECT = 102;
+constexpr char SC_REMOVE_OBJECT = 103;
+constexpr char SC_MOVE_OBJECT = 104;
+constexpr char SC_CHAT = 105;
+constexpr char SC_STAT_CHANGE = 106;
+constexpr char SC_8DIRECT_MOVE_OBJECT = 107;
+constexpr char SC_STATE_CHANGE = 108;
 
 constexpr int GAMESERVERPORT = 9000;
 
