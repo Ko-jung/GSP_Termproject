@@ -19,7 +19,7 @@ public:
 	~PacketMgr() {}
 
 public:
-	void ProcessPacket(PACKET* packet, Client* c);
+	void ProcessPacket(PACKET* packet, std::shared_ptr<Client> c);
 
 private:
 };

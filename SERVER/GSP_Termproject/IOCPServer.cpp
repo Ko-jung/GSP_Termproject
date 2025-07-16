@@ -17,6 +17,7 @@
 IOCPServer::IOCPServer()
 {
 	AcceptExpOver = new OverExpansion;
+	AcceptExpOver->_comp_type = COMP_TYPE::OP_ACCEPT;
 }
 
 IOCPServer::~IOCPServer()
@@ -169,14 +170,10 @@ void IOCPServer::Disconnect(int Id)
 
 void IOCPServer::ReadyAccept()
 {
-	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
-	char	accept_buf[sizeof(SOCKADDR_IN) * 2 + 32 + 100];
-
-	*(reinterpret_cast<SOCKET*>(&AcceptExpOver->_send_buf)) = c_socket;
+	NextAccpetSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);;
 	ZeroMemory(&AcceptExpOver->_over, sizeof(AcceptExpOver->_over));
-	AcceptExpOver->_comp_type = COMP_TYPE::OP_ACCEPT;
 
-	AcceptEx(ListenSocket, c_socket, accept_buf, 0, sizeof(SOCKADDR_IN) + 16,
+	AcceptEx(ListenSocket, NextAccpetSocket, AcceptExpOver->_send_buf, 0, sizeof(SOCKADDR_IN) + 16,
 		sizeof(SOCKADDR_IN) + 16, NULL, &AcceptExpOver->_over);
 }
 
@@ -184,21 +181,23 @@ void IOCPServer::ProcessAccept(OverExpansion* exp)
 {
 	if (ClientMgr::Instance()->GetClientCount() < MAX_USER)
 	{
-		int NowClientNum;
-		Client* NewClient = ClientMgr::Instance()->GetEmptyClient(NowClientNum);
+		std::shared_ptr<Client> NewClient = ClientMgr::Instance()->GetEmptyClient();
+		if (NewClient == nullptr)
+		{
+			std::cerr << "Client NULL!" << std::endl;
+			return;
+		}
+		NewClient->Socket = NextAccpetSocket;
 
-		NewClient->ClientNum = NowClientNum;
-		NewClient->Socket = (*(reinterpret_cast<SOCKET*>(exp->_send_buf)));
+		CreateIoCompletionPort(reinterpret_cast<HANDLE>(NewClient->Socket), hIocp, NewClient->ClientNum, 0);
 
-		CreateIoCompletionPort(reinterpret_cast<HANDLE>(NewClient->Socket), hIocp, NowClientNum, 0);
-
-	 	NewClient->Recv();
+		NewClient->Recv();
 
 		ReadyAccept();
 	}
 	else
 	{
-	 	std::cerr << "Client MAX!" << std::endl;
+		std::cerr << "Client MAX!" << std::endl;
 	}
 }
  

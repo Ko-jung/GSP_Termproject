@@ -44,6 +44,9 @@ DBMgr::~DBMgr()
 
 bool DBMgr::ExecLogin(const wchar_t* Query, const std::string& TargetID, SC_LOGIN_INFO_PACKET& SLIP)
 {
+    // hstmt는 THread Safe 하지 않으므로 전체를 감싼다
+    std::lock_guard<std::mutex> lock(DBMutex);
+
     SQLRETURN ret;
 
     ret = SQLExecDirect(hstmt, (SQLWCHAR*)Query, SQL_NTS);

@@ -4,6 +4,7 @@
 
 #include "../../Common/protocol.h"
 #include "../../Common/EnumDef.h"
+#include "LogUtil.h"
 
 #include "Manager/PacketMgr.h"
 #include "Manager/MapMgr.h"
@@ -18,7 +19,8 @@ Client::Client() :
 	RemainDataLen(0),
 	Speed(0.7f),
 	Size(1.f),
-	Experience(0.f)
+	Experience(0.f),
+	State(CLIENT_STATE::FREE)
 {
 	ImageSpriteWidth = 16;
 	ImageSpriteHeight = 32;
@@ -26,8 +28,11 @@ Client::Client() :
 	MaxHP = CurrentHP = 100;
 }
 
+#include <cassert>
 Client::~Client()
 {
+	assert(false);
+	std::cerr << "~Client() Called" << std::endl;
 }
 
 void Client::Init()
@@ -36,14 +41,12 @@ void Client::Init()
 	closesocket(Socket);
 	RemainDataLen = 0;
 	PlayerName[0] = '\0';
-	Position = {0.f, 0.f};
+	Position = { 0.f, 0.f };
 	Speed = 0;
 	Size = 0;
 	LastMoveTime = 0;
 
 	Direction = ACTOR_DIRECTION::DOWN;
-	ViewListLock;
-	ViewList;
 
 	std::lock_guard<std::mutex> ll(StateMutex);
 	State = CLIENT_STATE::FREE;
@@ -51,21 +54,24 @@ void Client::Init()
 
 void Client::Send(PACKET* p)
 {
-	if (Socket == INVALID_SOCKET)
-	{
-		std::cout << "ClientInfo Socket is INVALID_SOCKET" << std::endl;
-		return;
-	}
+	//if (Socket == INVALID_SOCKET)
+	//{
+	//	std::cout << "ClientInfo Socket is INVALID_SOCKET" << std::endl;
+	//	return;
+	//}
 
 	OverExpansion* exp = new OverExpansion{ (char*)p };
 
+	//TODO: ÀÌ°Å THread safe?
 	int ret = WSASend(Socket, &exp->_wsabuf, 1, 0, 0, &exp->_over, 0);
+	//assert(memcmp(&exp->_over, &tmp, sizeof(WSAOVERLAPPED)) != 0);
 	if (0 != ret)
 	{
 		int error_num = WSAGetLastError();
 		if (ERROR_IO_PENDING != error_num)
 		{
-			std::cout << "Client::Send() ERROR" << std::endl;
+			//LogUtil::PrintLog("Client::Send() Error: ClientNum: {}, ", ClientNum);
+			LogUtil::error_display(error_num);
 		}
 	}
 }
@@ -91,6 +97,8 @@ void Client::Recv()
 
 void Client::RecvProcess(int byte, OverExpansion* exp)
 {
+	assert(ClientNum >= 0 && ClientNum < MAX_USER);
+
 	int RemainData = byte + RemainDataLen;
 	char* Buf = exp->_send_buf;
 
@@ -99,7 +107,7 @@ void Client::RecvProcess(int byte, OverExpansion* exp)
 		PACKET* packet = reinterpret_cast<PACKET*>(Buf);
 		if (RemainData >= packet->size)
 		{
-			PacketMgr::Instance()->ProcessPacket(packet, this);
+			PacketMgr::Instance()->ProcessPacket(packet, shared_from_this());
 			Buf += packet->size;
 			RemainData -= packet->size;
 		}
@@ -107,14 +115,15 @@ void Client::RecvProcess(int byte, OverExpansion* exp)
 			break;
 	}
 	RemainDataLen = RemainData;
-
 	if (RemainData > 0)
 		memmove(exp->_send_buf, Buf, RemainData);
 	Recv();
 }
 
-void Client::StressTestMove(char Direction)
+void Client::StressTestMove(const CS_MOVE_PACKET* const CMP)
 {
+	LastMoveTime = CMP->move_time;
+	char Direction = CMP->direction;
 	switch (Direction)
 	{
 	case 0: if (Position.Y > 0)				Position.Y--; break;
@@ -157,16 +166,16 @@ void Client::Move(POSITION NewPos, char direction)
 	Position = NewPos;
 
 	// Client Position Reset
-	if(IsRollBacked)
-		SendMovePos(this);
+	if (IsRollBacked)
+		SendMovePos(shared_from_this());
 
 	if (CurrSectorXPos != PrevSectorXPos || CurrSectorYPos != PrevSectorYPos)
 	{
-		SectorMgr::Instance()->MoveSector(this, PrevSectorXPos, PrevSectorYPos);
+		//SectorMgr::Instance()->MoveSector(shared_from_this(), PrevSectorXPos, PrevSectorYPos);
 	}
 }
 
-bool Client::ApplyDamage(Client* Attacker, const int Damage)
+bool Client::ApplyDamage(std::shared_ptr<Client> Attacker, const int Damage)
 {
 	CurrentHP.fetch_add(-Damage);
 
@@ -186,7 +195,7 @@ RECT Client::GetCollisionBox()
 	RECT ReturnRect;
 	ReturnRect.left = (LONG)Position.X;
 	ReturnRect.top = (LONG)Position.Y;
-	ReturnRect.right = (LONG)Position.X +  (LONG)Size * ImageSpriteWidth;
+	ReturnRect.right = (LONG)Position.X + (LONG)Size * ImageSpriteWidth;
 	ReturnRect.bottom = (LONG)Position.Y + (LONG)Size * ImageSpriteHeight;
 
 	return ReturnRect;
@@ -231,8 +240,8 @@ void Client::SendStressTestMovePos()
 	Send(&SMOP);
 }
 
-void Client::SendMovePos(Client* c)
-{	
+void Client::SendMovePos(std::shared_ptr<Client> c)
+{
 	// Send Self Pos or Other Pos
 	SC_8DIRECT_MOVE_OBJECT_PACKET SDMOP;
 	SDMOP.id = c->ClientNum;
@@ -243,42 +252,42 @@ void Client::SendMovePos(Client* c)
 	Send(&SDMOP);
 }
 
-void Client::SendAddPlayer(Client* c)
+void Client::SendAddPlayer(std::shared_ptr<Client> c)
 {
 	SC_ADD_OBJECT_PACKET SAOP;
 	SAOP.id = c->ClientNum;
-	strcpy_s(SAOP.name, c->PlayerName);
+	strcpy_s(SAOP.name, NAME_SIZE, c->PlayerName);
 	SAOP.size = sizeof(SAOP);
 	SAOP.type = SC_ADD_OBJECT;
 	SAOP.x = (short)c->Position.X;
 	SAOP.y = (short)c->Position.Y;
 	SAOP.hp = c->CurrentHP;
-	SAOP.max_hp= c->MaxHP;
+	SAOP.max_hp = c->MaxHP;
 
-	ViewListLock.lock();
-	ViewList.insert(c);
-	ViewListLock.unlock();
+	//ViewListLock.lock();
+	//ViewList.insert(c);
+	//ViewListLock.unlock();
 
 	Send(&SAOP);
 }
 
-void Client::SendRemovePlayer(Client* c)
+void Client::SendRemovePlayer(std::shared_ptr<Client> c)
 {
-	ViewListLock.lock();
-	if (ViewList.count(c))
-		ViewList.erase(c);
-	else {
-		ViewListLock.unlock();
-		return;
-	}
-	ViewListLock.unlock();
+	//ViewListLock.lock();
+	//if (ViewList.count(c))
+	//	ViewList.erase(c);
+	//else {
+	//	ViewListLock.unlock();
+	//	return;
+	//}
+	//ViewListLock.unlock();
 
 	SC_REMOVE_OBJECT_PACKET SROP;
 	SROP.id = c->ClientNum;
 	Send(&SROP);
 }
 
-void Client::SendStatChange(Client* c)
+void Client::SendStatChange(std::shared_ptr<Client> c)
 {
 	SC_STAT_CHANGE_PACKET SSCP;
 	SSCP.id = c->ClientNum;

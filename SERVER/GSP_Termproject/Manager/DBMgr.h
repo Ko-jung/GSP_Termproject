@@ -23,5 +23,8 @@ public:
 	SQLHENV henv;
 	SQLHDBC hdbc;
 	SQLHSTMT hstmt = 0;
+
+private:
+	std::mutex DBMutex;
 };
 

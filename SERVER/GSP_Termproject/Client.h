@@ -6,7 +6,7 @@
 #include <mutex>
 #include <chrono>
 
-class Client
+class alignas(64) Client : public std::enable_shared_from_this<Client>
 {
 public:
 	Client();
@@ -17,9 +17,9 @@ public:
 	void Recv();
 	void RecvProcess(int byte, OverExpansion* exp);
 
-	void StressTestMove(char Direction);
+	void StressTestMove(const CS_MOVE_PACKET* const CMP);
 	void Move(POSITION NewPos, char direction);
-	bool ApplyDamage(Client* Attacker, const int Damage);
+	bool ApplyDamage(std::shared_ptr<Client> Attacker, const int Damage);
 
 	RECT GetCollisionBox();
 	RectF GetCollisionFBox();
@@ -27,10 +27,10 @@ public:
 	void SendLoginInfo();
 	void SendLoginInfo(SC_LOGIN_INFO_PACKET* SLIP);
 	void SendStressTestMovePos();
-	void SendMovePos(Client* c);
-	void SendAddPlayer(Client* c);
-	void SendRemovePlayer(Client* c);
-	void SendStatChange(Client* c);
+	void SendMovePos(std::shared_ptr<Client> c);
+	void SendAddPlayer(std::shared_ptr<Client> c);
+	void SendRemovePlayer(std::shared_ptr<Client> c);
+	void SendStatChange(std::shared_ptr<Client> c);
 
 	std::atomic_bool IsActive;
 	int ClientNum;
@@ -53,7 +53,7 @@ public:
 	std::mutex StateMutex;
 	int LastMoveTime;
 	std::mutex	ViewListLock;
-	std::unordered_set<Client*> ViewList;
+	std::unordered_set<std::shared_ptr<Client>> ViewList;
 
 	static int ImageSpriteWidth;
 	static int ImageSpriteHeight;

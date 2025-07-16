@@ -6,7 +6,7 @@
 #include "../Client.h"
 //#include "../TimerEvent.h"
 
-void PacketMgr::ProcessPacket(PACKET* packet, Client* c)
+void PacketMgr::ProcessPacket(PACKET* packet, std::shared_ptr<Client> c)
 {
 	switch (packet->type)
 	{

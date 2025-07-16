@@ -21,6 +21,7 @@ public:
 
 //protected:
 	SOCKET ListenSocket;
+	SOCKET NextAccpetSocket;
 	HANDLE hIocp;
 	class OverExpansion* AcceptExpOver;
 
