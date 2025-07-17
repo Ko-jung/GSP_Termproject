@@ -13,6 +13,7 @@
 #include <queue>
 #include <array>
 #include <memory>
+#include <cassert>
 
 using namespace std;
 using namespace chrono;
@@ -203,12 +204,20 @@ void Worker_Thread()
 			unsigned char* buf = g_clients[ci].recv_over.IOCP_buf;
 			unsigned psize = g_clients[ci].curr_packet_size;
 			unsigned pr_size = g_clients[ci].prev_packet_data;
+
 			while (io_size > 0) {
-				if (0 == psize) psize = *(unsigned short*)buf;
+				if (0 == psize)
+				{
+					psize = *(unsigned short*)buf;
+					if (psize > MAX_PACKET_SIZE) {
+						psize = *(unsigned char*)buf;
+					}
+				}
 				if (io_size + pr_size >= psize) {
 					// 지금 패킷 완성 가능
+					//assert(pr_size <= MAX_PACKET_SIZE);
 					unsigned char packet[MAX_PACKET_SIZE];
-					memcpy(packet, g_clients[ci].packet_buf, pr_size);
+					memcpy(packet, g_clients[ci].packet_buf, pr_size <= MAX_PACKET_SIZE ? pr_size : MAX_PACKET_SIZE);
 					memcpy(packet + pr_size, buf, psize - pr_size);
 					ProcessPacket(static_cast<int>(ci), packet);
 					io_size -= psize - pr_size;
@@ -216,11 +225,13 @@ void Worker_Thread()
 					psize = 0; pr_size = 0;
 				}
 				else {
+					//assert(io_size <= MAX_PACKET_SIZE);
 					memcpy(g_clients[ci].packet_buf + pr_size, buf, io_size);
 					pr_size += io_size;
 					io_size = 0;
 				}
 			}
+			assert(pr_size <= MAX_PACKET_SIZE && psize <= MAX_PACKET_SIZE);
 			g_clients[ci].curr_packet_size = psize;
 			g_clients[ci].prev_packet_data = pr_size;
 			DWORD recv_flag = 0;

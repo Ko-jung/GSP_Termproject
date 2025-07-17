@@ -11,6 +11,23 @@ struct TimerEvent
 	std::chrono::system_clock::time_point WakeupTime;
 	EVENT_TYPE EventType;
 	int TargetID;
+
+	TimerEvent() :
+		IocpID(-1),
+		WakeupTime(),
+		EventType(),
+		TargetID(0)
+	{ }
+	TimerEvent(int id,
+			std::chrono::system_clock::time_point time,
+			EVENT_TYPE type,
+			int tId) :
+		IocpID(id),
+		WakeupTime(time),
+		EventType(type),
+		TargetID(tId)
+	{ }
+
 	constexpr bool operator<(const TimerEvent& t) const
 	{
 		return WakeupTime > t.WakeupTime;

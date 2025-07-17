@@ -170,8 +170,7 @@ void Client::Move(POSITION NewPos, char direction)
 	Position = NewPos;
 
 	// Client Position Reset
-	if (IsRollBacked)
-		SendMovePos(shared_from_this());
+	if (IsRollBacked) SendMovePos(shared_from_this());
 
 	if (CurrSectorXPos != PrevSectorXPos || CurrSectorYPos != PrevSectorYPos)
 	{
