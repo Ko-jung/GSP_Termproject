@@ -124,13 +124,17 @@ void Client::StressTestMove(const CS_MOVE_PACKET* const CMP)
 {
 	LastMoveTime = CMP->move_time;
 	char Direction = CMP->direction;
+	POSITION NewPos = Position;
 	switch (Direction)
 	{
-	case 0: if (Position.Y > 0)				Position.Y--; break;
-	case 1: if (Position.Y < W_HEIGHT - 1)	Position.Y++; break;
-	case 2: if (Position.X > 0)				Position.X--; break;
-	case 3: if (Position.X < W_WIDTH - 1)	Position.X++; break;
+	case 0: if (NewPos.Y > 0)				NewPos.Y--; break;
+	case 1: if (NewPos.Y < W_HEIGHT - 1)	NewPos.Y++; break;
+	case 2: if (NewPos.X > 0)				NewPos.X--; break;
+	case 3: if (NewPos.X < W_WIDTH - 1)		NewPos.X++; break;
 	}
+
+	Move(NewPos, Direction);
+
 	SendStressTestMovePos();
 }
 

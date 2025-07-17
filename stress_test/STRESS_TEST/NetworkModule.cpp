@@ -285,7 +285,7 @@ void Adjust_Number_Of_Client()
 	}
 	else
 		if (DELAY_LIMIT < t_delay) {
-			delay_multiplier = 10;
+			delay_multiplier = 3;
 			return;
 		}
 	if (max_limit - (max_limit / 20) < active_clients) return;
