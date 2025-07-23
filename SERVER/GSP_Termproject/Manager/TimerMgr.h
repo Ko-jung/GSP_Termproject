@@ -3,7 +3,7 @@
 #include "../Define.h"
 #include "../../../Common/EnumDef.h"
 #include <chrono>
-#include <concurrent_priority_queue.h>
+#include <queue>
 
 struct TimerEvent
 {
@@ -45,6 +45,8 @@ public:
 	void SetIOCP(HANDLE* hIOCP) { this->phIOCP = hIOCP; }
 
 	HANDLE* phIOCP;
-	Concurrency::concurrent_priority_queue<std::shared_ptr<TimerEvent>> TimerQueue;
+
+	std::mutex TimerQueueMutex;
+	std::priority_queue<std::shared_ptr<TimerEvent>> TimerQueue;
 };
 

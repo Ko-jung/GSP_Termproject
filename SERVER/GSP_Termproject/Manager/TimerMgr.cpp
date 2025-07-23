@@ -5,10 +5,12 @@
 
 void TimerMgr::Pop()
 {
-	std::shared_ptr<TimerEvent> evnt;
-	auto now = std::chrono::system_clock::now();
-	while (TimerQueue.try_pop(evnt))
+	std::lock_guard<std::mutex> lock(TimerQueueMutex);
+	while (!TimerQueue.empty())
 	{
+		std::shared_ptr<TimerEvent> evnt;
+		evnt = TimerQueue.top();
+		TimerQueue.pop();
 		assert(evnt != nullptr);
 
 		// Do Bind Func
@@ -40,8 +42,7 @@ void TimerMgr::Pop()
 		{
 			// RePush
 			TimerQueue.push(evnt);
-			std::this_thread::yield();
-			return;
+			break;
 		}
 	}
 	std::this_thread::yield();
@@ -49,5 +50,6 @@ void TimerMgr::Pop()
 
 void TimerMgr::Insert(std::shared_ptr<TimerEvent> TE)
 {
+	std::lock_guard<std::mutex> lock(TimerQueueMutex);
 	TimerQueue.push(TE);
 }
