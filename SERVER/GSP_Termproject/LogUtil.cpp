@@ -9,6 +9,7 @@ using std::endl;
 
 void LogUtil::error_display(int err_no)
 {
+#ifdef _DEBUG
 	WCHAR* lpMsgBuf;
 	FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -18,10 +19,12 @@ void LogUtil::error_display(int err_no)
 	std::wcout << lpMsgBuf << std::endl;
 	//while (true);
 	LocalFree(lpMsgBuf);
+#endif // _DEBUG
 }
 
 void LogUtil::error_display(const char* msg)
 {
+#ifdef _DEBUG
     WCHAR* lpMsgBuf;
     int ErrorNum = WSAGetLastError();
     FormatMessage(
@@ -35,11 +38,5 @@ void LogUtil::error_display(const char* msg)
     //while (true);
     // µð¹ö±ë ¿ë
     LocalFree(lpMsgBuf);
-}
-
-void LogUtil::PrintLog(const char* s)
-{
-#ifdef _DEBUG
-    cout << s << endl;
 #endif // _DEBUG
 }

@@ -15,6 +15,8 @@
 #include <memory>
 #include <cassert>
 
+#include <concurrent_priority_queue.h>
+
 using namespace std;
 using namespace chrono;
 
@@ -32,7 +34,7 @@ const static int MAX_BUFF_SIZE = 255;
 
 HANDLE g_hiocp;
 
-enum OPTYPE { OP_SEND, OP_RECV, OP_DO_MOVE };
+enum OPTYPE { OP_SEND, OP_RECV, OP_DO_MOVE, OP_DO_ATTACK };
 
 high_resolution_clock::time_point last_connect_time;
 
@@ -55,11 +57,14 @@ struct CLIENT {
 	unsigned char packet_buf[MAX_PACKET_SIZE];
 	int prev_packet_data;
 	int curr_packet_size;
+
 	high_resolution_clock::time_point last_move_time;
+	high_resolution_clock::time_point last_attack_time;
 };
 
 array<int, MAX_CLIENTS> client_map;
 array<CLIENT, MAX_CLIENTS> g_clients;
+//array<CLIENT, MAX_CLIENTS> g_clients;
 atomic_int num_connections;
 atomic_int client_to_close;
 atomic_int active_clients;
@@ -68,6 +73,7 @@ int			global_delay;				// ms단위, 1000이 넘으면 클라이언트 증가 종료
 
 vector <thread*> worker_threads;
 thread test_thread;
+thread timer_thread;
 
 float point_cloud[MAX_TEST * 2];
 
@@ -107,8 +113,8 @@ void DisconnectClient(int ci)
 
 void SendPacket(int cl, void* packet)
 {
-	int psize = reinterpret_cast<unsigned char*>(packet)[0];
-	int ptype = reinterpret_cast<unsigned char*>(packet)[1];
+	int psize = reinterpret_cast<unsigned short*>(packet)[0];
+	int ptype = reinterpret_cast<unsigned char*>(packet)[2];
 	OverlappedEx* over = new OverlappedEx;
 	over->event_type = OP_SEND;
 	memcpy(over->IOCP_buf, packet, psize);
@@ -145,13 +151,47 @@ void ProcessPacket(int ci, unsigned char packet[])
 				}
 			}
 		}
+		//else
+		//{
+		//	int my_id = client_map[move_packet->id];
+		//	if (-1 != my_id) {
+		//		g_clients[my_id].x = move_packet->x;
+		//		g_clients[my_id].y = move_packet->y;
+		//	}
+		//}
 	}
 					   break;
-	case SC_ADD_OBJECT: break;
-	case SC_REMOVE_OBJECT: break;
+	case SC_ADD_OBJECT:
+	//{
+	//	SC_ADD_OBJECT_PACKET* add_packet = reinterpret_cast<SC_ADD_OBJECT_PACKET*>(packet);
+	//	if (add_packet->id >= MAX_CLIENTS)
+	//	{
+	//		g_clients[ci].connected = true;
+	//		int my_id = client_map[add_packet->id];
+	//		if (-1 == my_id) {
+	//			my_id = ci;
+	//			client_map[add_packet->id] = my_id;
+	//			g_clients[my_id].id = add_packet->id;
+	//			g_clients[my_id].x = add_packet->x;
+	//			g_clients[my_id].y = add_packet->y;
+	//		}
+	//		else {
+	//			g_clients[my_id].x = add_packet->x;
+	//			g_clients[my_id].y = add_packet->y;
+	//		}
+	//	}
+	//	break;
+	//}
+		break;
+	case SC_REMOVE_OBJECT:
+	{
+
+		break;
+	}
 	case SC_CHAT: break;
 	case SC_8DIRECT_MOVE_OBJECT: break;
 	case SC_STATE_CHANGE: break;
+	case SC_STAT_CHANGE: break;
 	case SC_LOGIN_INFO:
 	{
 		g_clients[ci].connected = true;
@@ -284,7 +324,7 @@ void Adjust_Number_Of_Client()
 	int t_delay = global_delay;
 	if (DELAY_LIMIT2 < t_delay) {
 		if (true == increasing) {
-			max_limit = active_clients;
+			//max_limit = active_clients;
 			increasing = false;
 		}
 		if (100 > active_clients) return;
@@ -331,11 +371,10 @@ void Adjust_Number_Of_Client()
 	CS_LOGIN_PACKET l_packet;
 
 	int temp = num_connections;
-	sprintf_s(l_packet.name, "%d", temp);
+	sprintf_s(l_packet.name,  "%d", temp);
 	l_packet.size = sizeof(l_packet);
 	l_packet.type = CS_LOGIN;
 	SendPacket(num_connections, &l_packet);
-
 
 	int ret = WSARecv(g_clients[num_connections].client_socket, &g_clients[num_connections].recv_over.wsabuf, 1,
 		NULL, &recv_flag, &g_clients[num_connections].recv_over.over, NULL);
@@ -360,19 +399,28 @@ void Test_Thread()
 
 		for (int i = 0; i < num_connections; ++i) {
 			if (false == g_clients[i].connected) continue;
-			if (g_clients[i].last_move_time + 1s > high_resolution_clock::now()) continue;
-			g_clients[i].last_move_time = high_resolution_clock::now();
-			CS_MOVE_PACKET my_packet;
-			my_packet.size = sizeof(my_packet);
-			my_packet.type = CS_MOVE;
-			switch (rand() % 4) {
-			case 0: my_packet.direction = 0; break;
-			case 1: my_packet.direction = 1; break;
-			case 2: my_packet.direction = 2; break;
-			case 3: my_packet.direction = 3; break;
+			if (g_clients[i].last_move_time + 1s < high_resolution_clock::now())
+			{
+				g_clients[i].last_move_time = high_resolution_clock::now();
+				CS_MOVE_PACKET my_packet;
+				my_packet.size = sizeof(my_packet);
+				my_packet.type = CS_MOVE;
+				switch (rand() % 4) {
+				case 0: my_packet.direction = 0; break;
+				case 1: my_packet.direction = 1; break;
+				case 2: my_packet.direction = 2; break;
+				case 3: my_packet.direction = 3; break;
+				}
+				my_packet.move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
+				SendPacket(i, &my_packet);
 			}
-			my_packet.move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
-			SendPacket(i, &my_packet);
+			else if (g_clients[i].last_attack_time + 5s < high_resolution_clock::now())
+			{
+				g_clients[i].last_attack_time = high_resolution_clock::now();
+				CS_ATTACK_PACKET my_packet;
+				my_packet.WeaponType = 0;
+				SendPacket(i, &my_packet);
+			}
 		}
 	}
 }

@@ -56,7 +56,6 @@ void Client::Send(PACKET* p)
 {
 	//if (Socket == INVALID_SOCKET)
 	//{
-	//	std::cout << "ClientInfo Socket is INVALID_SOCKET" << std::endl;
 	//	return;
 	//}
 
@@ -78,6 +77,11 @@ void Client::Send(PACKET* p)
 
 void Client::Recv()
 {
+	//if (Socket == INVALID_SOCKET)
+	//{
+	//	return;
+	//}
+
 	DWORD recv_flag = 0;
 
 	ZeroMemory(&Exp._over, sizeof(Exp._over));
@@ -90,7 +94,8 @@ void Client::Recv()
 		int error_num = WSAGetLastError();
 		if (ERROR_IO_PENDING != error_num)
 		{
-			std::cout << "[Recv Error] ClientNum: " << ClientNum << "  Error Num: " << error_num << std::endl;
+			LogUtil::PrintLog("Client::Recv() Error: ClientNum: {}, ", ClientNum);
+			LogUtil::error_display(error_num);
 		}
 	}
 }

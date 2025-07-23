@@ -173,7 +173,7 @@ void ClientMgr::SendPosToOtherClient(std::shared_ptr<Client> c)
 {
 	for (const auto& ClientRfe : Clients)
 	{
-		if (!ClientRfe || c) continue;
+		if (!ClientRfe || !c) continue;
 		if (ClientRfe->State != CLIENT_STATE::INGAME) continue;
 		if (ClientRfe->ClientNum == c->ClientNum) continue;
 		if (IsNPC(ClientRfe)) continue;
@@ -189,7 +189,8 @@ void ClientMgr::SendAddPlayer(std::shared_ptr<Client> c)
 		if (!ClientRfe || c) continue;
 		if (ClientRfe->State != CLIENT_STATE::INGAME) continue;
 		if (ClientRfe->ClientNum == c->ClientNum) continue;
-		if (IsNPC(ClientRfe)) continue;
+		if (IsNPC(ClientRfe))
+			WakeUpNPC(ClientRfe->ClientNum, c->ClientNum);
 
 		ClientRfe->SendAddPlayer(c);
 	}
@@ -264,11 +265,6 @@ void ClientMgr::SendPosToOtherClientUseSector(std::shared_ptr<Client> c)
 
 void ClientMgr::SendAddPlayerUseSector(std::shared_ptr<Client> c)
 {
-	//std::lock_guard<std::mutex> ll(c->ClientMutex);
-
-	auto now = std::chrono::high_resolution_clock::now();
-	static auto Temp = std::chrono::high_resolution_clock::now();
-	//TempMutex.lock();
 	for (auto pClient : Clients)
 	{
 		if (!pClient) continue;
@@ -280,18 +276,10 @@ void ClientMgr::SendAddPlayerUseSector(std::shared_ptr<Client> c)
 		}
 		if (!IsNPC(pClient))
 			pClient->SendAddPlayer(c);
+		else WakeUpNPC(pClient->ClientNum, c->ClientNum);
 
 		c->SendAddPlayer(pClient);
 	}
-	//TempMutex.unlock();
-
-	auto end = std::chrono::high_resolution_clock::now();
-
-	//if (ClientCount > 4200 && std::chrono::duration_cast<std::chrono::seconds>(end - Temp).count() > 3)
-	//{
-	//	std::cout << "SendAddPlayerUseSector Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - now).count() << "ms" << std::endl;
-	//	Temp = std::chrono::high_resolution_clock::now();
-	//}
 
 	//int	CurrSectorXPos = c->Position.X / SECTORSIZE;
 	//int CurrSectorYPos = c->Position.Y / SECTORSIZE;
@@ -473,10 +461,9 @@ void ClientMgr::ProcessClientDie(std::shared_ptr<Client> Target)
 	//SectorMgr::Instance()->Remove(Target);
 	if (IsNPC(Target))
 	{
-		int TargetIndex = Target->ClientNum;
 		{
-			std::lock_guard<std::mutex> ll{ Clients[TargetIndex]->StateMutex };
-			Clients[TargetIndex]->State = CLIENT_STATE::FREE;
+			std::lock_guard<std::mutex> ll{ Target->StateMutex };
+			Target->State = CLIENT_STATE::FREE;
 		}
 	}
 	else
@@ -492,19 +479,20 @@ void ClientMgr::ProcessClientDie(std::shared_ptr<Client> Target)
 void ClientMgr::ProcessClientSpawn(int id)
 {
 	std::shared_ptr<Client> Target = Clients[id];
+	std::pair<WORD, WORD> SpawnPos = MapMgr::Instance()->GetRandomCanSpawnPos();
 
 	SC_LOGIN_INFO_PACKET SLIP;
 	SLIP.id = Target->ClientNum;
-	SLIP.x = 100;
-	SLIP.y = 100;
+	SLIP.x = SpawnPos.first;
+	SLIP.y = SpawnPos.second;
 	SLIP.visual = 0;
 	SLIP.max_hp = SLIP.hp = 100;
 	SLIP.exp = Target->Experience;
 	SLIP.level = Target->Level;
 	SendProcess(Target, &SLIP);
 
-	Target->Position.X = 100;
-	Target->Position.Y = 100;
+	Target->Position.X = SpawnPos.first;
+	Target->Position.Y = SpawnPos.second;
 	Target->CurrentHP = 100;
 	Target->MaxHP = 100;
 	//SectorMgr::Instance()->Insert(Target);
@@ -579,52 +567,82 @@ void ClientMgr::ProcessNPCMove(int id, OverExpansion* exp)
 	std::shared_ptr<Client> NPC = Clients[id];
 	bool KeepAlive = false;
 
-	// SectorMgr* p = SectorMgr::Instance();
-	// int Y;
-	// int X;
-	// 
-	// for (int i = 0; i < 9; i++)
-	// {
-	// 	Y = (NPC->Position.Y / SECTORSIZE) + i / 3 - 1;
-	// 	X = (NPC->Position.X / SECTORSIZE) + i % 3 - 1;
-	// 
-	// 	if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
-	// 
-	// 	Sector* sector = SectorMgr::Instance()->GetSector(X,Y);
-	// 	sector->SectorLock.lock();
-	// 	int j = 0;
-	// 	for (auto& pClient : sector->SectorClient)
-	// 	{
-	// 		assert(pClient != nullptr);
-	// 		
-	// 		pClient->StateMutex.lock();
-	// 		if (pClient->State == CLIENT_STATE::INGAME && CanSee(NPC, pClient))
-	// 		{
-	// 			pClient->StateMutex.unlock();
-	// 			KeepAlive = true;
-	// 			i = 9;
-	// 			break;
-	// 		}
-	// 		pClient->StateMutex.unlock();
-	// 		j++;
-	// 	}
-	// 	sector->SectorLock.unlock();
-	// }
-	// 
-	// if (KeepAlive)
-	// {
-	// 	NPC->IsActive = true;
-	// 
-	// 	//NPCRandomMove(NPC);
-	// 	
-	// 	std::shared_ptr<TimerEvent> evnt = std::make_shared<TimerEvent>(id,
-	// 		std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 );
-	// 	TimerMgr::Instance()->Insert(evnt);
-	// }
-	// else
-	// {
-	// 	NPC->IsActive = false;
-	// }
+	for (int i = 0; i < MAX_USER; i++)
+	{
+		std::shared_ptr<Client> pClient = Clients[i];
+
+		if (!IsValid(pClient)) continue;
+
+		std::lock_guard <std::mutex> ll(pClient->StateMutex);
+		if (pClient->State == CLIENT_STATE::INGAME && CanSee(NPC, pClient))
+		{
+			KeepAlive = true;
+			break;
+		}
+	}
+
+	if (KeepAlive)
+	{
+		NPC->IsActive = true;
+
+		NPCRandomMove(NPC);
+
+		std::shared_ptr<TimerEvent> evnt = std::make_shared<TimerEvent>(id,
+			std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0);
+		TimerMgr::Instance()->Insert(evnt);
+	}
+	else
+	{
+		NPC->IsActive = false;
+	}
+
+
+// SectorMgr* p = SectorMgr::Instance();
+// int Y;
+// int X;
+// 
+// for (int i = 0; i < 9; i++)
+// {
+// 	Y = (NPC->Position.Y / SECTORSIZE) + i / 3 - 1;
+// 	X = (NPC->Position.X / SECTORSIZE) + i % 3 - 1;
+// 
+// 	if (X < 0 || X >= W_WIDTH || Y < 0 || Y >= W_HEIGHT) continue;
+// 
+// 	Sector* sector = SectorMgr::Instance()->GetSector(X,Y);
+// 	sector->SectorLock.lock();
+// 	int j = 0;
+// 	for (auto& pClient : sector->SectorClient)
+// 	{
+// 		assert(pClient != nullptr);
+// 		
+// 		pClient->StateMutex.lock();
+// 		if (pClient->State == CLIENT_STATE::INGAME && CanSee(NPC, pClient))
+// 		{
+// 			pClient->StateMutex.unlock();
+// 			KeepAlive = true;
+// 			i = 9;
+// 			break;
+// 		}
+// 		pClient->StateMutex.unlock();
+// 		j++;
+// 	}
+// 	sector->SectorLock.unlock();
+// }
+// 
+// if (KeepAlive)
+// {
+// 	NPC->IsActive = true;
+// 
+// 	//NPCRandomMove(NPC);
+// 	
+// 	std::shared_ptr<TimerEvent> evnt = std::make_shared<TimerEvent>(id,
+// 		std::chrono::system_clock::now() + std::chrono::seconds(1), EVENT_TYPE::EV_RANDOM_MOVE, 0 );
+// 	TimerMgr::Instance()->Insert(evnt);
+// }
+// else
+// {
+// 	NPC->IsActive = false;
+// }
 }
 
 void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, std::shared_ptr<Client> c)
@@ -663,11 +681,16 @@ void ClientMgr::ProcessAttack(CS_ATTACK_PACKET* CAP, std::shared_ptr<Client> c)
 		WeaponDamage = 75.f;
 
 	}
+	else
+	{
+		return; // Invalid Weapon Type
+	}
 
 	std::unordered_set<std::shared_ptr<Client>> CollideClient;
 	for (const auto& ClientRfe : Clients)
 	{
 		if (!ClientRfe) continue;
+		if (!IsNPC(ClientRfe)) continue;
 
 		RectF TargetCollisionBox = ClientRfe->GetCollisionFBox();
 		if (CollisionChecker::CollisionCheck(TargetCollisionBox, AttackCollisionBox))
