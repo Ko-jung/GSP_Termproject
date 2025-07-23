@@ -57,11 +57,13 @@ void SectorMgr::MakeViewList(std::unordered_set<std::shared_ptr<Client>>& ViewLi
 		sector->SectorLock.lock();
 		for (auto& pClient : sector->SectorClient)
 		{
-			if (pClient == Center) continue;
+			if (!pClient || pClient == Center) continue;
 			if (!IsIncludeNPC && ClientMgr::IsNPC(pClient)) continue;
 			if (ClientMgr::CanSee(pClient, Center))
 			{
-				ViewList.insert(pClient);
+				std::lock_guard<std::mutex> ll(pClient->StateMutex);
+				if (pClient->State == CLIENT_STATE::INGAME)
+					ViewList.insert(pClient);
 			}
 		}
 		sector->SectorLock.unlock();

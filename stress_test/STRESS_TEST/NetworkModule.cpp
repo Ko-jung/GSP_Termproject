@@ -195,10 +195,13 @@ void ProcessPacket(int ci, unsigned char packet[])
 	case SC_LOGIN_INFO:
 	{
 		g_clients[ci].connected = true;
-		active_clients++;
 		SC_LOGIN_INFO_PACKET* login_packet = reinterpret_cast<SC_LOGIN_INFO_PACKET*>(packet);
 		int my_id = ci;
 		client_map[login_packet->id] = my_id;
+
+		if (g_clients[my_id].id != login_packet->id)
+			active_clients++;
+
 		g_clients[my_id].id = login_packet->id;
 		g_clients[my_id].x = login_packet->x;
 		g_clients[my_id].y = login_packet->y;
@@ -324,7 +327,7 @@ void Adjust_Number_Of_Client()
 	int t_delay = global_delay;
 	if (DELAY_LIMIT2 < t_delay) {
 		if (true == increasing) {
-			//max_limit = active_clients;
+			max_limit = active_clients;
 			increasing = false;
 		}
 		if (100 > active_clients) return;

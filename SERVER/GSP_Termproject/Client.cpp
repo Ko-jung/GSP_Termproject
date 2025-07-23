@@ -9,6 +9,7 @@
 #include "Manager/PacketMgr.h"
 #include "Manager/MapMgr.h"
 #include "Manager/SectorMgr.h"
+#include "CollisionChecker.h"
 
 int Client::ImageSpriteWidth;
 int Client::ImageSpriteHeight;
@@ -179,7 +180,7 @@ void Client::Move(POSITION NewPos, char direction)
 
 	if (CurrSectorXPos != PrevSectorXPos || CurrSectorYPos != PrevSectorYPos)
 	{
-		//SectorMgr::Instance()->MoveSector(shared_from_this(), PrevSectorXPos, PrevSectorYPos);
+		SectorMgr::Instance()->MoveSector(shared_from_this(), PrevSectorXPos, PrevSectorYPos);
 	}
 }
 
