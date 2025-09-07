@@ -9,6 +9,7 @@
 #include "Manager/PacketMgr.h"
 #include "Manager/MapMgr.h"
 #include "Manager/SectorMgr.h"
+#include "Manager/ExpPoolMgr.h"
 #include "CollisionChecker.h"
 
 int Client::ImageSpriteWidth;
@@ -27,6 +28,8 @@ Client::Client() :
 	ImageSpriteHeight = 32;
 
 	MaxHP = CurrentHP = 100;
+
+	Exp.Init();
 }
 
 #include <cassert>
@@ -60,7 +63,7 @@ void Client::Send(PACKET* p)
 	//	return;
 	//}
 
-	OverExpansion* exp = new OverExpansion{ (char*)p };
+	OverExpansion* exp = ExpPoolMgr::Instance()->GetExp((char*)p);
 
 	//TODO: ÀÌ°Å THread safe?
 	int ret = WSASend(Socket, &exp->_wsabuf, 1, 0, 0, &exp->_over, 0);

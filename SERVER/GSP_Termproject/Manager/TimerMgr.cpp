@@ -1,5 +1,6 @@
 #include "TimerMgr.h"
 #include "../../../Common/OverExpansion.h"
+#include "ExpPoolMgr.h"
 #include <thread>
 #include <cassert>
 
@@ -19,15 +20,14 @@ void TimerMgr::Pop()
 			{
 			case EVENT_TYPE::EV_RANDOM_MOVE:
 			{
-				//std::shared_ptr<OverExpansion> over = std::make_shared< OverExpansion>();
-				OverExpansion* over = new OverExpansion;
+				OverExpansion* over = ExpPoolMgr::Instance()->GetExp();
 				over->_comp_type = COMP_TYPE::OP_NPC_MOVE;
 				PostQueuedCompletionStatus(*phIOCP, 1, evnt->IocpID, &over->_over);
 				break;
 			}
 			case EVENT_TYPE::EV_SPAWN_PLAYER:
 			{
-				OverExpansion* over = new OverExpansion;
+				OverExpansion* over = ExpPoolMgr::Instance()->GetExp();
 				over->_comp_type = COMP_TYPE::OP_SPAWN_PLAYER;
 				PostQueuedCompletionStatus(*phIOCP, 1, evnt->IocpID, &over->_over);
 				break;

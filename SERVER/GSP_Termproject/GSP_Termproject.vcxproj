@@ -138,7 +138,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Manager\ClientMgr.cpp" />
     <ClCompile Include="Manager\DBMgr.cpp" />
+    <ClCompile Include="Manager\ExpPoolMgr.cpp" />
     <ClCompile Include="Manager\MapMgr.cpp" />
+    <ClCompile Include="Manager\ObjectPoolMgr.cpp" />
     <ClCompile Include="Manager\PacketMgr.cpp" />
     <ClCompile Include="Manager\SectorMgr.cpp" />
     <ClCompile Include="Manager\TimerMgr.cpp" />
@@ -155,7 +157,9 @@
     <ClInclude Include="LogUtil.h" />
     <ClInclude Include="Manager\ClientMgr.h" />
     <ClInclude Include="Manager\DBMgr.h" />
+    <ClInclude Include="Manager\ExpPoolMgr.h" />
     <ClInclude Include="Manager\MapMgr.h" />
+    <ClInclude Include="Manager\ObjectPoolMgr.h" />
     <ClInclude Include="Manager\PacketMgr.h" />
     <ClInclude Include="Manager\SectorMgr.h" />
     <ClInclude Include="Manager\TimerMgr.h" />

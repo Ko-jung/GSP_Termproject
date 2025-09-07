@@ -54,6 +54,12 @@
     <ClCompile Include="Manager\DBMgr.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Manager\ObjectPoolMgr.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="Manager\ExpPoolMgr.cpp">
+      <Filter>Manager</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -103,6 +109,12 @@
     </ClInclude>
     <ClInclude Include="Manager\DBMgr.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Manager\ObjectPoolMgr.h">
+      <Filter>Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="Manager\ExpPoolMgr.h">
+      <Filter>Manager</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

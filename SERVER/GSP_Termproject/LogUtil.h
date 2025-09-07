@@ -1,4 +1,7 @@
 #pragma once
+#include <format>
+#include <iostream>
+
 class LogUtil
 {
 public:

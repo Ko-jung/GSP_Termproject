@@ -20,12 +20,28 @@ public:
 
 	OverExpansion()
 	{
+		//_wsabuf.len = CHAT_SIZE;
+		//_wsabuf.buf = _send_buf;
+		//_comp_type = COMP_TYPE::OP_RECV;
+		//ZeroMemory(&_over, sizeof(_over));
+	}
+	//OverExpansion(char* packet)
+	//{
+	//	_wsabuf.len = *(unsigned short*)packet;
+	//	_wsabuf.buf = _send_buf;
+	//	ZeroMemory(&_over, sizeof(_over));
+	//	_comp_type = COMP_TYPE::OP_SEND;
+	//	memcpy(_send_buf, packet, _wsabuf.len);
+	//}
+
+	void Init()
+	{
 		_wsabuf.len = CHAT_SIZE;
 		_wsabuf.buf = _send_buf;
 		_comp_type = COMP_TYPE::OP_RECV;
 		ZeroMemory(&_over, sizeof(_over));
 	}
-	OverExpansion(char* packet)
+	void Init(char* packet)
 	{
 		_wsabuf.len = *(unsigned short*)packet;
 		_wsabuf.buf = _send_buf;

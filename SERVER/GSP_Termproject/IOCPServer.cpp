@@ -2,7 +2,6 @@
 #include "Define.h"
 #include "../../Common/EnumDef.h"
 #include "../../Common/protocol.h"
-#include "../../Common/OverExpansion.h"
 
 #include "LogUtil.h"
 
@@ -11,6 +10,7 @@
 #include "Manager/SectorMgr.h"
 #include "Manager/TimerMgr.h"
 #include "Manager/DBMgr.h"
+#include "Manager/ExpPoolMgr.h"
 
 #include "Client.h"
 
@@ -32,6 +32,7 @@ bool IOCPServer::Init(const int WNum)
 	MapMgr::Instance()->Init();
 	
 	DBMgr::Instance();
+	ExpPoolMgr::Instance();
 
 	WSADATA WSAData;
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
@@ -95,6 +96,9 @@ void IOCPServer::StartServer()
 
 void IOCPServer::Worker()
 {
+	// 객체 풀
+	ExpPoolMgr::Instance()->Init(5000);	
+
 	while (true)
 	{
 		DWORD num_byte;
@@ -113,7 +117,7 @@ void IOCPServer::Worker()
 			LogUtil::error_display(err_no);
 			Disconnect(client_id);
 			if (Exp->_comp_type == COMP_TYPE::OP_SEND)
-				delete Exp;
+				ExpPoolMgr::Instance()->Release(Exp);
 			continue;
 		}
 
@@ -132,15 +136,15 @@ void IOCPServer::Worker()
 				ClientMgr::Instance()->RecvProcess(client_id, num_byte, Exp);
 				break;
 			case COMP_TYPE::OP_SEND:
-				delete Exp;
+				ExpPoolMgr::Instance()->Release(Exp);
 				break;
 			case COMP_TYPE::OP_NPC_MOVE:
 				ClientMgr::Instance()->ProcessNPCMove(client_id, Exp);
-				delete Exp;
+				ExpPoolMgr::Instance()->Release(Exp);
 				break;
 			case COMP_TYPE::OP_SPAWN_PLAYER:
 				ClientMgr::Instance()->ProcessClientSpawn(client_id);
-				delete Exp;
+				ExpPoolMgr::Instance()->Release(Exp);
 				break;
 		default:
 			break;
