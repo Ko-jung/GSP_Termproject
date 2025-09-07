@@ -465,11 +465,15 @@ void ClientMgr::ProcessClientSpawn(int id)
 
 void ClientMgr::ProcessLogin(const CS_LOGIN_PACKET* CLP, std::shared_ptr<Client> c)
 {
-	WCHAR query[100];
+	WCHAR query[256];
 	SC_LOGIN_INFO_PACKET SLIP;
 
-	bool Succ = DBMgr::Instance()->ExecLogin(L"SELECT ID, X, Y, Visual, Level, Hp, MaxHp, Exp FROM [GSP_Termproject].[dbo].[GSP_Termproject_Player]",
-		CLP->name, SLIP);
+	swprintf_s(query,
+		L"	SELECT ID, X, Y, Visual, Level, Hp, MaxHp, Exp \
+			FROM [GSP_Termproject].[dbo].[GSP_Termproject_Player]\
+			WHERE ID = N'%hs'", CLP->name);
+
+	bool Succ = DBMgr::Instance()->ExecLogin(query,	CLP->name, SLIP);
 
 	assert(IsValid(c));
 	assert(CLP->type == CS_LOGIN);

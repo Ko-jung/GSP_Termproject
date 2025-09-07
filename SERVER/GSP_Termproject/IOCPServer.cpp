@@ -26,6 +26,8 @@ IOCPServer::~IOCPServer()
 
 bool IOCPServer::Init(const int WNum)
 {
+	std::cout << "THread Num: " << WNum << std::endl;
+
 	// MapMgr Init
 	MapMgr::Instance()->Init();
 	

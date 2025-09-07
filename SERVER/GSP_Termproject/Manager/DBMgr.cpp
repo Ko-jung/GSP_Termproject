@@ -93,26 +93,15 @@ bool DBMgr::ExecLogin(const wchar_t* Query, const std::string& TargetID, SC_LOGI
         if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
         {
             // 정상 처리
-            std::wstring StdId{ ID };
-            auto end = StdId.find_last_not_of(L' ');
-            if (end == std::wstring::npos) StdId = L"";
-            else StdId = StdId.substr(0, end + 1);
-
-            std::wstring TargetId;
-            TargetId.assign(TargetID.begin(), TargetID.end());
-
-            if (TargetId == StdId)
-            {
-                SLIP.x = PosX;
-                SLIP.y = PosY;
-                SLIP.visual = Visual;
-                SLIP.hp = HP;
-                SLIP.max_hp = MaxHP;
-                SLIP.exp = Exp;
-                SLIP.level = Level;
-                SQLCloseCursor(hstmt);
-                return true;
-            }
+            SLIP.x = PosX;
+            SLIP.y = PosY;
+            SLIP.visual = Visual;
+            SLIP.hp = HP;
+            SLIP.max_hp = MaxHP;
+            SLIP.exp = Exp;
+            SLIP.level = Level;
+            SQLCloseCursor(hstmt);
+            return true;
         }
         else
         {
