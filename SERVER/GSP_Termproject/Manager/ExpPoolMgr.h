@@ -1,9 +1,10 @@
 #pragma once
 
 #include "ObjectPoolMgr.h"
-#include <queue>
+#include <concurrent_queue.h>
 #include <unordered_map>
 #include <thread>
+
 
 class OverExpansion;
 
@@ -24,5 +25,5 @@ private:
 
 	OverExpansion* PopExp();
 
-	std::unordered_map<std::thread::id, std::queue<OverExpansion*>> PoolMap;
+	std::unordered_map<std::thread::id, concurrency::concurrent_queue<OverExpansion*>> PoolMap;
 };

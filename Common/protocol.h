@@ -16,6 +16,8 @@ constexpr int VIEW_RANGE = 5;
 
 constexpr int BOARDSIZE = 20;
 
+constexpr int EXPOBJECT = 10'000;
+
 // Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;

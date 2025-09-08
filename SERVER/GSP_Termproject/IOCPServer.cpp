@@ -100,7 +100,7 @@ void IOCPServer::StartServer()
 void IOCPServer::Worker()
 {
 	// 객체 풀
-	ExpPoolMgr::Instance()->Init(5000);
+	ExpPoolMgr::Instance()->Init(EXPOBJECT);
 
 	Done->count_down();	// 하나 완료했다고 신호
 	Done->wait();		// 모든 스레드가 ExpPool을 Init 할 때까지 대기
@@ -162,7 +162,7 @@ void IOCPServer::Timer()
 {
 	TimerMgr* TimerInstance = TimerMgr::Instance();
 
-	ExpPoolMgr::Instance()->Init(5000);
+	ExpPoolMgr::Instance()->Init(EXPOBJECT);
 
 	while (true)
 	{

@@ -18,6 +18,8 @@ public:
 	COMP_TYPE _comp_type;
 	int _ai_target_obj;
 
+	std::thread::id ThreadPoolNum;
+
 	OverExpansion()
 	{
 		//_wsabuf.len = CHAT_SIZE;
@@ -40,6 +42,8 @@ public:
 		_wsabuf.buf = _send_buf;
 		_comp_type = COMP_TYPE::OP_RECV;
 		ZeroMemory(&_over, sizeof(_over));
+
+		//ThreadPoolNum는 외부에서
 	}
 	void Init(char* packet)
 	{
@@ -48,5 +52,7 @@ public:
 		ZeroMemory(&_over, sizeof(_over));
 		_comp_type = COMP_TYPE::OP_SEND;
 		memcpy(_send_buf, packet, _wsabuf.len);
+
+		//ThreadPoolNum는 외부에서
 	}
 };

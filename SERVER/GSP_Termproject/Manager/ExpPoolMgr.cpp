@@ -2,20 +2,6 @@
 #include "../../../Common/OverExpansion.h"
 #include "../LogUtil.h"
 
-struct ThreadPool
-{
-	std::queue<OverExpansion*> Pool;
-
-	~ThreadPool()
-	{
-		while (!Pool.empty())
-		{
-			delete Pool.front();
-			Pool.pop();
-		}
-	}
-};
-
 ExpPoolMgr::ExpPoolMgr()
 {
 }
@@ -25,17 +11,17 @@ ExpPoolMgr::~ExpPoolMgr()
 	for (auto& PoolPair : PoolMap)
 	{
 		auto Pool = PoolPair.second;
-		while (!Pool.empty())
+		OverExpansion* Temp;
+		while (Pool.try_pop(Temp))
 		{
-			OverExpansion* NewExp = Pool.front();
-			Pool.pop();
+			delete Temp;
 		}
 	}
 }
 
 void ExpPoolMgr::Init(int PoolCount)
 {
-	std::queue<OverExpansion*> Pool;
+	concurrency::concurrent_queue<OverExpansion*> Pool;
 	for (int i = 0; i < PoolCount; i++)
 	{
 		Pool.push(new OverExpansion());
@@ -47,7 +33,7 @@ OverExpansion* ExpPoolMgr::PopExp()
 {
 	OverExpansion* NewExp = nullptr;
 
-	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()];
+	concurrency::concurrent_queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()];
 	if (Pool.empty())
 	{
 		LogUtil::PrintLog("Pool is Empty!");
@@ -55,9 +41,9 @@ OverExpansion* ExpPoolMgr::PopExp()
 	}
 	else
 	{
-		NewExp = Pool.front();
-		Pool.pop();
+		Pool.try_pop(NewExp);
 	}
+	NewExp->ThreadPoolNum = std::this_thread::get_id();
 
 	return NewExp;
 }
@@ -80,6 +66,11 @@ OverExpansion* ExpPoolMgr::GetExp(char* packet)
 
 void ExpPoolMgr::Release(OverExpansion* ReleaseExp)
 {
-	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()];
+	concurrency::concurrent_queue<OverExpansion*>& Pool = PoolMap[ReleaseExp->ThreadPoolNum];
 	Pool.push(ReleaseExp);
+
+	if (Pool.unsafe_size() >= 10000)
+	{
+
+	}
 }
