@@ -161,8 +161,8 @@ void IOCPServer::Worker()
 void IOCPServer::Timer()
 {
 	TimerMgr* TimerInstance = TimerMgr::Instance();
-	// 객체 풀
-	ExpPoolMgr::Instance()->Init(50000);
+
+	ExpPoolMgr::Instance()->Init(5000);
 
 	while (true)
 	{

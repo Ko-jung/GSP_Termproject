@@ -12,7 +12,7 @@ int main()
 
 	IOCPServer* IocpServer = new IOCPServer();
 
-	IocpServer->Init(std::thread::hardware_concurrency());
+	IocpServer->Init(std::thread::hardware_concurrency() / 2);
 	IocpServer->BindListen(GAMESERVERPORT);
 
 	IocpServer->StartServer();

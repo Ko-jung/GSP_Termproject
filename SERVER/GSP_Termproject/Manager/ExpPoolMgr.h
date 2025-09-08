@@ -2,7 +2,7 @@
 
 #include "ObjectPoolMgr.h"
 #include <queue>
-#include <vector>
+#include <unordered_map>
 #include <thread>
 
 class OverExpansion;
@@ -23,4 +23,6 @@ private:
 	~ExpPoolMgr();
 
 	OverExpansion* PopExp();
+
+	std::unordered_map<std::thread::id, std::queue<OverExpansion*>> PoolMap;
 };

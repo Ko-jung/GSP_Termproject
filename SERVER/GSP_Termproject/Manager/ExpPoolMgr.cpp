@@ -16,37 +16,47 @@ struct ThreadPool
 	}
 };
 
-thread_local ThreadPool TLPool;
-
 ExpPoolMgr::ExpPoolMgr()
 {
 }
 
 ExpPoolMgr::~ExpPoolMgr()
 {
+	for (auto& PoolPair : PoolMap)
+	{
+		auto Pool = PoolPair.second;
+		while (!Pool.empty())
+		{
+			OverExpansion* NewExp = Pool.front();
+			Pool.pop();
+		}
+	}
 }
 
 void ExpPoolMgr::Init(int PoolCount)
 {
+	std::queue<OverExpansion*> Pool;
 	for (int i = 0; i < PoolCount; i++)
 	{
-		TLPool.Pool.push(new OverExpansion());
+		Pool.push(new OverExpansion());
 	}
+	PoolMap.insert({std::this_thread::get_id(), Pool});
 }
 
 OverExpansion* ExpPoolMgr::PopExp()
 {
 	OverExpansion* NewExp = nullptr;
 
-	if (TLPool.Pool.empty())
+	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()];
+	if (Pool.empty())
 	{
 		LogUtil::PrintLog("Pool is Empty!");
 		NewExp = new OverExpansion();
 	}
 	else
 	{
-		NewExp = TLPool.Pool.front();
-		TLPool.Pool.pop();
+		NewExp = Pool.front();
+		Pool.pop();
 	}
 
 	return NewExp;
@@ -70,5 +80,6 @@ OverExpansion* ExpPoolMgr::GetExp(char* packet)
 
 void ExpPoolMgr::Release(OverExpansion* ReleaseExp)
 {
-	TLPool.Pool.push(ReleaseExp);
+	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()];
+	Pool.push(ReleaseExp);
 }
