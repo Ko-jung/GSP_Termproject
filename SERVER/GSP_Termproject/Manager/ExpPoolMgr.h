@@ -2,7 +2,7 @@
 
 #include "ObjectPoolMgr.h"
 #include <queue>
-#include <unordered_map>
+#include <vector>
 #include <thread>
 
 class OverExpansion;
@@ -23,10 +23,4 @@ private:
 	~ExpPoolMgr();
 
 	OverExpansion* PopExp();
-
-	struct alignas(64) ThreadPool {
-		std::queue<OverExpansion*> Pool;
-	};
-	std::unordered_map<std::thread::id, ThreadPool> PoolMap;
 };
-
