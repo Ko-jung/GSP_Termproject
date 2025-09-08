@@ -1,6 +1,9 @@
 #pragma once
 #include "stdafx.h"
 
+// 스레드의 동기화 C++20
+#include <latch>
+
 class IOCPServer
 {
 public:
@@ -29,5 +32,7 @@ public:
 	std::thread TimerThread;
 
 	int WorkerNum;
+
+	std::unique_ptr<std::latch> Done;
 };
 

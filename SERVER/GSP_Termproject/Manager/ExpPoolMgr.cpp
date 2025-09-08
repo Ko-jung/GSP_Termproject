@@ -10,7 +10,7 @@ ExpPoolMgr::~ExpPoolMgr()
 {
 	for (auto& PoolPair : PoolMap)
 	{
-		auto Pool = PoolPair.second;
+		auto Pool = PoolPair.second.Pool;
 		while (!Pool.empty())
 		{
 			OverExpansion* NewExp = Pool.front();
@@ -26,14 +26,14 @@ void ExpPoolMgr::Init(int PoolCount)
 	{
 		Pool.push(new OverExpansion());
 	}
-	PoolMap.insert({std::this_thread::get_id(), Pool});
+	PoolMap.insert({ std::this_thread::get_id(), ThreadPool(Pool) });
 }
 
 OverExpansion* ExpPoolMgr::PopExp()
 {
 	OverExpansion* NewExp = nullptr;
 
-	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()];
+	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()].Pool;
 	if (Pool.empty())
 	{
 		LogUtil::PrintLog("Pool is Empty!");
@@ -66,6 +66,6 @@ OverExpansion* ExpPoolMgr::GetExp(char* packet)
 
 void ExpPoolMgr::Release(OverExpansion* ReleaseExp)
 {
-	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()];
+	std::queue<OverExpansion*>& Pool = PoolMap[std::this_thread::get_id()].Pool;
 	Pool.push(ReleaseExp);
 }

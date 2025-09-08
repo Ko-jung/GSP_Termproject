@@ -24,6 +24,9 @@ private:
 
 	OverExpansion* PopExp();
 
-	std::unordered_map<std::thread::id, std::queue<OverExpansion*>> PoolMap;
+	struct alignas(64) ThreadPool {
+		std::queue<OverExpansion*> Pool;
+	};
+	std::unordered_map<std::thread::id, ThreadPool> PoolMap;
 };
 
