@@ -21,12 +21,14 @@ ExpPoolMgr::~ExpPoolMgr()
 
 void ExpPoolMgr::Init(int PoolCount)
 {
+	InitPoolCount = PoolCount;
 	concurrency::concurrent_queue<OverExpansion*> Pool;
-	for (int i = 0; i < PoolCount; i++)
+	for (int i = 0; i < InitPoolCount; i++)
 	{
 		Pool.push(new OverExpansion());
 	}
 	PoolMap.insert({std::this_thread::get_id(), Pool});
+	//Test.insert(std::make_pair(std::this_thread::get_id(), PoolCount));
 }
 
 OverExpansion* ExpPoolMgr::PopExp()
@@ -37,13 +39,16 @@ OverExpansion* ExpPoolMgr::PopExp()
 	if (Pool.empty())
 	{
 		LogUtil::PrintLog("Pool is Empty!");
-		NewExp = new OverExpansion();
+		for (int i = 0; i < InitPoolCount; i++)
+		{
+			Pool.push(new OverExpansion());
+		}
 	}
-	else
-	{
-		Pool.try_pop(NewExp);
-	}
+
+	Pool.try_pop(NewExp);
 	NewExp->ThreadPoolNum = std::this_thread::get_id();
+
+	//Test[std::this_thread::get_id()]--;
 
 	return NewExp;
 }
@@ -68,9 +73,5 @@ void ExpPoolMgr::Release(OverExpansion* ReleaseExp)
 {
 	concurrency::concurrent_queue<OverExpansion*>& Pool = PoolMap[ReleaseExp->ThreadPoolNum];
 	Pool.push(ReleaseExp);
-
-	if (Pool.unsafe_size() >= 10000)
-	{
-
-	}
+	//Test[ReleaseExp->ThreadPoolNum]++;
 }

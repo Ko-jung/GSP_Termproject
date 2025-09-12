@@ -25,5 +25,7 @@ private:
 
 	OverExpansion* PopExp();
 
+	int InitPoolCount;
 	std::unordered_map<std::thread::id, concurrency::concurrent_queue<OverExpansion*>> PoolMap;
+	std::unordered_map<std::thread::id, std::atomic<int>> Test;
 };
